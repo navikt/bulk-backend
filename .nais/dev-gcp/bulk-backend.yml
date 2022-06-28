@@ -11,7 +11,7 @@ metadata:
 spec:
   image: {{ image }}
   port: 8080
-  accesPolicy:
+  accessPolicy:
       inbound:
         rules:
           - application: bulk-frontend
