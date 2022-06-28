@@ -30,7 +30,5 @@ spec:
     enabled: true
     path: /metrics
 
-  service:
-    protocol: http
   ingresses:
     - https://team-bulk.dev.intern.nav.no
