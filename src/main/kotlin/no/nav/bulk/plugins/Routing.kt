@@ -15,5 +15,13 @@ fun Application.configureRouting() {
             call.respond<Hello>(Hello("Hello World!!!!"))
 
         }
+
+        get("/isalive") {
+            call.respond("Alive")
+        }
+
+        get("/isready") {
+            call.respond("Ready")
+        }
     }
 }
