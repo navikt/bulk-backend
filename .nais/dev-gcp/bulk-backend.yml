@@ -31,4 +31,4 @@ spec:
     path: /metrics
 
   ingresses:
-    - https://team-bulk.dev.intern.nav.no
+    - https://bulk-backend.dev.intern.nav.no
