@@ -12,8 +12,7 @@ fun Application.configureRouting() {
     routing {
         get("/") {
             //call.respondText("Hello World!")
-            call.respond<Hello>(Hello("Hello World!!!!"))
-
+            call.respond(Hello("Hello World!!!!"))
         }
 
         get("/isalive") {
