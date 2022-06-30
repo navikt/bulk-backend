@@ -12,9 +12,9 @@ spec:
   image: {{ image }}
   port: 8080
   accessPolicy:
-      inbound:
-        rules:
-          - application: bulk-frontend
+    inbound:
+      rules:
+        - application: bulk-frontend
   strategy:
     type: Recreate
   liveness:
@@ -29,6 +29,10 @@ spec:
   prometheus:
     enabled: true
     path: /metrics
+  azure:
+    application:
+      enabled: true
+      tenant: trygdeetaten.no
 
   ingresses:
     - https://bulk-backend.dev.intern.nav.no
