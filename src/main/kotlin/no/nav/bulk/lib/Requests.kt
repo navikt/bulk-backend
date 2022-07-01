@@ -1,6 +1,5 @@
 package no.nav.bulk.lib
 
-import AuthConfig
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
