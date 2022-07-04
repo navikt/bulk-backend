@@ -7,10 +7,10 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
+import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as CNServer
-import no.nav.bulk.lib.testKRREndpoint
 
 lateinit var client: HttpClient
 
@@ -35,7 +35,6 @@ fun initializeHttpClient() = runBlocking {
 
 fun main() {
     initializeHttpClient()
-    /*
     embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
         configureRouting()
         configureHTTP()
@@ -43,15 +42,11 @@ fun main() {
             json()
         }
     }.start(wait = true)
-     */
-    val scope = CoroutineScope(Dispatchers.IO)
-    val job = scope.launch {
-        testKRREndpoint(personer)
-    }
-
-    println("Kan væew før")
-    runBlocking {
-        job.join()
-        println("Siste som skjer")
-    }
+//    val scope = CoroutineScope(Dispatchers.IO)
+//    val job = scope.launch {
+//        getContactInfo(personer)
+//    }
+//    runBlocking {
+//        job.join()
+//    }
 }
