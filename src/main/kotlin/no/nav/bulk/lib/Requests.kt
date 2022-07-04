@@ -21,3 +21,9 @@ suspend fun getAccessToken(): TokenEndpointResponse {
     }
     return response.body()
 }
+
+suspend fun testKRREndpoint(personer: List<String>) {
+
+    val accessToken = getAccessToken()
+    println(accessToken)
+}
