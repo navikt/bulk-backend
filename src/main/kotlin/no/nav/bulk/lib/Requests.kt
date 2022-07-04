@@ -5,8 +5,8 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import no.nav.bulk.client
-import no.nav.bulk.models.ContactInfoRequest
-import no.nav.bulk.models.ContactInfoResponse
+import no.nav.bulk.models.DigDirRequest
+import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.TokenEndpointResponse
 import java.util.UUID
 
@@ -26,7 +26,7 @@ suspend fun getAccessToken(): TokenEndpointResponse {
     return response.body()
 }
 
-suspend fun getContactInfo(personnr: List<String>): ContactInfoResponse {
+suspend fun getContactInfo(personnr: List<String>): DigDirResponse {
     val accessToken = getAccessToken()
     println(accessToken)
     println()
@@ -36,7 +36,7 @@ suspend fun getContactInfo(personnr: List<String>): ContactInfoResponse {
             append("Nav-Call-Id", UUID.randomUUID().toString())
         }
         contentType(ContentType.Application.Json)
-        setBody(ContactInfoRequest(personnr))
+        setBody(DigDirRequest(personnr))
     }
     return res.body()
 }
