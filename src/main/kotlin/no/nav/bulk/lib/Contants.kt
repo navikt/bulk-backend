@@ -8,5 +8,5 @@ object AuthConfig {
 }
 
 object Urls {
-    val DIGDIR_KRR_API_URL = "https://digdir-krr-proxy.dev.intern.nav.no/rest/v1"
+    val DIGDIR_KRR_API_URL = "https://digdir-krr-proxy.dev.intern.nav.no/rest/v1/personer"
 }
