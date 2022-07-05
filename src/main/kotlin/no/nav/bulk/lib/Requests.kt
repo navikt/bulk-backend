@@ -1,5 +1,6 @@
 package no.nav.bulk.lib
 
+import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
@@ -10,8 +11,9 @@ import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.TokenEndpointResponse
 import java.util.UUID
 
-suspend fun getAccessToken(): TokenEndpointResponse {
-    val response = client.post(Endpoints.TOKEN_ENDPOINT) {
+suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse {
+    val localClient = clientArg ?: client
+    val response = localClient.post(Endpoints.TOKEN_ENDPOINT) {
         setBody(
             MultiPartFormDataContent(
                 formData {
@@ -26,10 +28,9 @@ suspend fun getAccessToken(): TokenEndpointResponse {
     return response.body()
 }
 
-suspend fun getContactInfo(personnr: List<String>): DigDirResponse {
-    val accessToken = getAccessToken()
-    println(accessToken)
-    println()
+suspend fun getContactInfo(personnr: List<String>, clientArg: HttpClient? = null): DigDirResponse {
+    val localClient = clientArg ?: client
+    val accessToken = getAccessToken(localClient)
     val res = client.post(Endpoints.DIGDIR_KRR_API_URL) {
         headers {
             append(HttpHeaders.Authorization, "Bearer ${accessToken.access_token}")
