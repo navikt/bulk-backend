@@ -1,9 +1,11 @@
 package no.nav.bulk
 
 import no.nav.bulk.lib.filterAndMapDigDirResponse
+import no.nav.bulk.models.DigDirPersonInfo
 import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.PersonInfoResponse
 import org.junit.jupiter.api.Test
+import java.util.logging.Filter
 import kotlin.test.assertEquals
 
 class FilterAndMapTest  {
@@ -11,7 +13,8 @@ class FilterAndMapTest  {
     /**
      * Test cases:
      * 1. Test that for an input of a person where kanVarsles is true, a corresponding PersonInfoResponse is returned.
-     * 2. Test that for an input of a person where kanVarsles is false or reservert is false, FeilType "reservert" is returned
+     * 2. Test that for an input of a person where kanVarsles is false or reservert is false or aktiv is false,
+     * FeilType "reservert" is returned
      * 3. Test that for an input where both epostadresseOppdatert
      * and mobiltelefonnummerOppdatert is older than 18 months, FeilType utdatert_kontaktinformasjon is returned.
      * 4. Test that for an input where epostadresseOppdaert is older than 18 months, but mobiltelefonnummerOppdatert is
@@ -34,10 +37,15 @@ class FilterAndMapTest  {
 
     @Test
     fun testKanVarslesIsTrue() {
-        val testData = DigDirResponse(mapOf(), mapOf())
-        val expected = PersonInfoResponse(mapOf())
-        val actual = filterAndMapDigDirResponse(testData)
+        val expected = FilterTestData.RESULT_KAN_VALRSLES_TRUE
+        val actual = filterAndMapDigDirResponse(FilterTestData.INPUT_KAN_VARSLES_TRUE)
         assertEquals(expected, actual, "The correct PersonInfoResponse object was not returned for kanVarsles is true.")
     }
+
+    @Test
+    fun testKanVarslesIsFalse() {
+    }
+
+
 
 }
