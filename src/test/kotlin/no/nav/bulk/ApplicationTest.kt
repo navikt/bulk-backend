@@ -6,6 +6,6 @@ import io.ktor.server.testing.*
 class ApplicationTest {
     @Test
     fun testRoot() = testApplication {
-        assert(true)
+        assert(false)
     }
 }
