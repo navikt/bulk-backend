@@ -30,6 +30,7 @@ tasks {
         useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed")
+            showStandardStreams = true
         }
     }
 
@@ -80,4 +81,6 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlin_version")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.3")
 }
