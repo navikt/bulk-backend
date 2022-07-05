@@ -1,7 +1,7 @@
 val ktor_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
-val junitJupiterVersion = "5.8.2"
+val junitJupiterVersion: String by project
 
 plugins {
     application
@@ -29,7 +29,7 @@ tasks {
     withType<Test> {
         useJUnitPlatform()
         testLogging {
-            events("skipped", "failed")
+            events("passed", "skipped", "failed")
         }
     }
 
@@ -73,12 +73,12 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
-
-
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
     testImplementation("org.awaitility:awaitility:4.2.0")
+    testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
+    testImplementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
 }
