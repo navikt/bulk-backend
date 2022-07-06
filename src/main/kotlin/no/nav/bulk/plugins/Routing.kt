@@ -18,7 +18,7 @@ fun Application.configureRouting() {
             call.respond("Ready")
         }
 
-        get("/personer") {
+        post("/personer") {
             val requestData = call.receive<PersonInfoRequest>()
             val res = getContactInfo(requestData.personidenter)
             // Add filter here
