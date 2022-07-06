@@ -19,16 +19,22 @@ data class Person(
     val leverandoerSertifikat: String? = null,
 )
 
-/**
- * Custom error class to denote the possible errors.
- */
-data class Error(val errorMessage: String?)
+enum class FeilType(val value: String) {
+    RESERVERT("reservert"),
+    KAN_IKKE_VARSLES("kan_ikke_varsles"),
+    PERSON_IKKE_FUNNET("person_ikke_funnet"),
+    UTDATERT_KONTAKTINFORMASJON("utdatert_kontaktinformasjon"),
+    STRENGT_FORTROLIG_ADRESSE("strengt_fortrolig_adresse"),
+    STRENGT_FORTROLIG_UTENLANDSK_ADRESSE("strengt_fortrolig_utenlandsk_adresse"),
+    FORTROLIG_ADRESSE("fortrolig_adresse"),
+    SKJERMET("skjermet"),
+}
 
 /**
  * Container class consisting of the Person object if there was no error, or an error object
  * denoting if that person is not available.
  */
-data class PersonData(val person: Person?, val error: Error?)
+data class PersonData(val person: Person?, val feil: FeilType?)
 
 /**
  * The actual response sent back to the user from this API.

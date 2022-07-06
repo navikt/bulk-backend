@@ -23,7 +23,7 @@ data class DigDirPersonInfo(
  */
 @kotlinx.serialization.Serializable
 enum class DigDirFeil(val value: String) {
-    IKKE_FUNNET("person_ikke_funnet"),
+    PERSON_IKKE_FUNNET("person_ikke_funnet"),
     STRENGT_FORTROLIG_ADRESSE("strengt_fortrolig_adresse"),
     STRENGT_FORTROLIG_UTENLANDSK_ADRESSE("strengt_fortrolig_utenlandsk_adresse"),
     FORTROLIG_ADRESSE("fortrolig_adresse"),
