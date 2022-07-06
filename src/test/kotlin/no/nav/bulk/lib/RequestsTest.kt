@@ -65,7 +65,6 @@ class RequestsTest {
         assertEquals(true, response.personer.isNotEmpty())
     }
 
-     */
 
     @Test
     fun testGetAccessToken() = testApplication {
@@ -75,5 +74,7 @@ class RequestsTest {
         assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
         assertEquals("Bearer", tokenEndpointResponse.token_type)
     }
+
+     */
 
 }
