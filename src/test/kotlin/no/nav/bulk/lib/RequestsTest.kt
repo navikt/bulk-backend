@@ -1,6 +1,5 @@
 package no.nav.bulk.lib
 
-import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -8,8 +7,8 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
+import no.nav.bulk.initializeHttpClient
 import kotlin.test.*
-import no.nav.bulk.token
 import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
@@ -61,9 +60,11 @@ class RequestsTest {
         assertEquals(true, false)
     }
 
+
     @Test
     fun testGetAccessToken() = testApplication {
-        val tokenEndpointResponse = HttpClient().token()
+        initializeHttpClient()
+        val tokenEndpointResponse = getAccessToken()
         assertEquals(3599, tokenEndpointResponse.expires_in)
         assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
         assertEquals("Bearer", tokenEndpointResponse.token_type)
