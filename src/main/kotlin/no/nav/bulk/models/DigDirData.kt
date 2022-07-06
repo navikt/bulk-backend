@@ -37,7 +37,7 @@ enum class DigDirFeil(val value: String) {
  * @param SikkerDigitalPostkasse
  */
 @kotlinx.serialization.Serializable
-data class DigDirResponse(val personer: Map<String, DigDirPersonInfo>, val feil: Map<String, DigDirFeil>)
+data class DigDirResponse(val personer: Map<String, DigDirPersonInfo>, val feil: Map<String, String>)
 
 @kotlinx.serialization.Serializable
 data class SikkerDigitalPostkasse(
