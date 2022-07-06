@@ -31,11 +31,11 @@ suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse
 
 suspend fun getContactInfo(personnr: List<String>, clientArg: HttpClient? = null): DigDirResponse {
     val localClient = clientArg ?: client
-    val accessToken = getAccessToken(localClient)
+    val accessToken = getAccessToken(localClient).access_token
     val res =
             localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
                 headers {
-                    append(HttpHeaders.Authorization, "Bearer $accessToken}")
+                    append(HttpHeaders.Authorization, "Bearer $accessToken")
                     append("Nav-Call-Id", UUID.randomUUID().toString())
                 }
                 contentType(ContentType.Application.Json)
