@@ -27,7 +27,9 @@ object FilterTestData {
         spraak = "nb",
         epostadresse = "ola@nordmann.no",
         mobiltelefonnummer = "12345678",
-        addresse = "Nordmannveien 12A"
+        adresse = "Nordmannveien 12A",
+        leverandoerAdresse = "Digipost",
+        leverandoerSertifikat = "noe"
     )
 
     private fun buildInput(person: DigDirPersonInfo? = null, feil: DigDirFeil? = null) = DigDirResponse(
@@ -200,7 +202,7 @@ object FilterTestData {
             "4321" to PersonData(null, FeilType.RESERVERT),
             "6432" to PersonData(null, FeilType.RESERVERT),
             "2345" to PersonData(DEFAULT_PERSON_RESULT.copy(personident = "2345", epostadresse = null), null),
-            "5678" to PersonData(DEFAULT_PERSON_RESULT.copy(personident = "2345", mobiltelefonnummer = null), null),
+            "5678" to PersonData(DEFAULT_PERSON_RESULT.copy(personident = "5678", mobiltelefonnummer = null), null),
             "7890" to PersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON),
             "1111" to PersonData(null, FeilType.PERSON_IKKE_FUNNET),
             "2222" to PersonData(null, FeilType.SKJERMET),
