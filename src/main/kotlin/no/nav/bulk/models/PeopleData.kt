@@ -4,7 +4,7 @@ package no.nav.bulk.models
  * The expected request class to this API.
  */
 @kotlinx.serialization.Serializable
-data class PersonInfoRequest(val personidenter: List<String>)
+data class PeopleDataRequest(val personidenter: List<String>)
 
 /**
  * The relevant part of PersonInfo (data from KRR) that is sent as a response from this API.
@@ -40,4 +40,4 @@ data class PersonData(val person: Person?, val feil: FeilType?)
  * The actual response sent back to the user from this API.
  * The string in the hashmap maps to the personident in the person object.
  */
-data class PersonInfoResponse(val personer: Map<String, PersonData>)
+data class PeopleDataResponse(val personer: Map<String, PersonData>)

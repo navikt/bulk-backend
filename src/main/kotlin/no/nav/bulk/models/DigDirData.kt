@@ -5,7 +5,7 @@ package no.nav.bulk.models
 data class DigDirRequest(val personidenter: List<String>)
 
 @kotlinx.serialization.Serializable
-data class DigDirPersonInfo(
+data class DigDirPerson(
     val personident: String,
     val aktiv: Boolean? = null,
     val kanVarsles: Boolean? = null,
@@ -29,6 +29,7 @@ enum class DigDirFeil(val value: String) {
     FORTROLIG_ADRESSE("fortrolig_adresse"),
     SKJERMET("skjermet")
 }
+
 /**
  * personer maps the person with the personident to the corresponding personinfo object
  * feil maps the personident from a PersonInfo object, into a String that contains the error message
@@ -37,7 +38,7 @@ enum class DigDirFeil(val value: String) {
  * @param SikkerDigitalPostkasse
  */
 @kotlinx.serialization.Serializable
-data class DigDirResponse(val personer: Map<String, DigDirPersonInfo>, val feil: Map<String, String>)
+data class DigDirResponse(val personer: Map<String, DigDirPerson>, val feil: Map<String, String>)
 
 @kotlinx.serialization.Serializable
 data class SikkerDigitalPostkasse(

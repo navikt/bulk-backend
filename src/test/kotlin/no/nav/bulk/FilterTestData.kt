@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 object FilterTestData {
 
-    private val DEFAULT_PERSON_INPUT = DigDirPersonInfo(
+    private val DEFAULT_PERSON_INPUT = DigDirPerson(
         personident = "1234",
         aktiv = true,
         kanVarsles = true,
@@ -32,7 +32,7 @@ object FilterTestData {
         leverandoerSertifikat = "noe"
     )
 
-    private fun buildInput(person: DigDirPersonInfo? = null, feil: DigDirFeil? = null) = DigDirResponse(
+    private fun buildInput(person: DigDirPerson? = null, feil: DigDirFeil? = null) = DigDirResponse(
         personer = if (person == null) emptyMap() else mapOf(
             "1234" to person
         ),
@@ -43,7 +43,7 @@ object FilterTestData {
 
     private fun buildPersonData(person: Person?, feil: FeilType? = null) = PersonData(person = person, feil = feil)
 
-    private fun buildResult(personData: PersonData) = PersonInfoResponse(
+    private fun buildResult(personData: PersonData) = PeopleDataResponse(
         personer = mapOf("1234" to personData)
     )
 
@@ -196,7 +196,7 @@ object FilterTestData {
         )
     )
 
-    val RESULT_MULTIPLE_PEOPLE = PersonInfoResponse(
+    val RESULT_MULTIPLE_PEOPLE = PeopleDataResponse(
         personer = mapOf(
             "1234" to PersonData(DEFAULT_PERSON_RESULT, null),
             "4321" to PersonData(null, FeilType.RESERVERT),
