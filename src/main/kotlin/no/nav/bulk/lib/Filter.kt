@@ -56,7 +56,7 @@ fun validateDigDirPersonInfo(personInfo: DigDirPerson): DigDirPersonValidationRe
     // test outdated contact info
 }
 
-fun successMap(personInfo: DigDirPerson, caveat: SuccessCaveat): PersonData {
+fun mapToPersonData(personInfo: DigDirPerson, caveat: SuccessCaveat): PersonData {
     return PersonData(
         Person(
             personident = personInfo.personident,
@@ -77,7 +77,7 @@ fun filterAndMapDigDirResponse(digDirResponse: DigDirResponse): PeopleDataRespon
         when (val result = validateDigDirPersonInfo(personInfo)) {
             is DigDirPersonValidationResult.Fail -> peopleResponseMap[personident] = PersonData(null, result.feilType)
             is DigDirPersonValidationResult.Success -> peopleResponseMap[personident] =
-                successMap(personInfo, result.caveat)
+                mapToPersonData(personInfo, result.caveat)
         }
     }
     for ((personident, feil) in digDirResponse.feil) {

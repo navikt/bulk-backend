@@ -32,7 +32,7 @@ object FilterTestData {
         leverandoerSertifikat = "noe"
     )
 
-    private fun buildInput(person: DigDirPerson? = null, feil: DigDirFeil? = null) = DigDirResponse(
+    private fun createInput(person: DigDirPerson? = null, feil: DigDirFeil? = null) = DigDirResponse(
         personer = if (person == null) emptyMap() else mapOf(
             "1234" to person
         ),
@@ -41,130 +41,130 @@ object FilterTestData {
         )
     )
 
-    private fun buildPersonData(person: Person?, feil: FeilType? = null) = PersonData(person = person, feil = feil)
+    private fun createPersonData(person: Person?, feil: FeilType? = null) = PersonData(person = person, feil = feil)
 
-    private fun buildResult(personData: PersonData) = PeopleDataResponse(
+    private fun createResult(personData: PersonData) = PeopleDataResponse(
         personer = mapOf("1234" to personData)
     )
 
-    val INPUT_KAN_VARSLES_TRUE = buildInput(DEFAULT_PERSON_INPUT)
+    val INPUT_KAN_VARSLES_TRUE = createInput(DEFAULT_PERSON_INPUT)
 
-    val RESULT_KAN_VALRSLES_TRUE = buildResult(buildPersonData(DEFAULT_PERSON_RESULT))
+    val RESULT_KAN_VALRSLES_TRUE = createResult(createPersonData(DEFAULT_PERSON_RESULT))
 
-    val INPUT_KAN_VARSLES_FALSE = buildInput(
+    val INPUT_KAN_VARSLES_FALSE = createInput(
         DEFAULT_PERSON_INPUT.copy(
             kanVarsles = false,
             reservert = true,
         )
     )
 
-    val RESULT_KAN_VALRSLES_FALSE = buildResult(
-        buildPersonData(
+    val RESULT_KAN_VALRSLES_FALSE = createResult(
+        createPersonData(
             null,
             FeilType.RESERVERT
         )
     )
 
-    val INPUT_OUTDATED_CONTACT_INFO = buildInput(
+    val INPUT_OUTDATED_CONTACT_INFO = createInput(
         DEFAULT_PERSON_INPUT.copy(
             epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
             mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
         )
     )
 
-    val RESULT_OUTDATED_CONTACT_INFO = buildResult(
-        buildPersonData(
+    val RESULT_OUTDATED_CONTACT_INFO = createResult(
+        createPersonData(
             person = null,
             feil = FeilType.UTDATERT_KONTAKTINFORMASJON
         )
     )
 
 
-    val INPUT_OUTDATED_EPOST_NOT_NUMBER = buildInput(
+    val INPUT_OUTDATED_EPOST_NOT_NUMBER = createInput(
         DEFAULT_PERSON_INPUT.copy(
             epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
         )
     )
 
-    val RESULT_OUTDATED_EPOST_NOT_NUMBER = buildResult(
-        buildPersonData(
+    val RESULT_OUTDATED_EPOST_NOT_NUMBER = createResult(
+        createPersonData(
             person = DEFAULT_PERSON_RESULT.copy(epostadresse = null)
         )
     )
 
-    val INPUT_OUTDATED_NUMBER_NOT_EPOST = buildInput(
+    val INPUT_OUTDATED_NUMBER_NOT_EPOST = createInput(
         DEFAULT_PERSON_INPUT.copy(
             mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
         )
     )
 
-    val RESULT_OUTDATED_NUMBER_NOT_EPOST = buildResult(
-        buildPersonData(DEFAULT_PERSON_RESULT.copy(mobiltelefonnummer = null))
+    val RESULT_OUTDATED_NUMBER_NOT_EPOST = createResult(
+        createPersonData(DEFAULT_PERSON_RESULT.copy(mobiltelefonnummer = null))
     )
 
-    val INPUT_OUTDATED_NUMBER_EPOST_NULL = buildInput(
+    val INPUT_OUTDATED_NUMBER_EPOST_NULL = createInput(
         DEFAULT_PERSON_INPUT.copy(
             mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
             epostadresse = null
         )
     )
 
-    val RESULT_OUTDATED_NUMBER_EPOST_NULL = buildResult(
-        buildPersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON)
+    val RESULT_OUTDATED_NUMBER_EPOST_NULL = createResult(
+        createPersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON)
     )
 
-    val INPUT_OUTDATED_EPOST_NUMBER_NULL = buildInput(
+    val INPUT_OUTDATED_EPOST_NUMBER_NULL = createInput(
         DEFAULT_PERSON_INPUT.copy(
             epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
             mobiltelefonnummer = null
         )
     )
 
-    val RESULT_OUTDATED_EPOST_NUMBER_NULL = buildResult(
-        buildPersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON)
+    val RESULT_OUTDATED_EPOST_NUMBER_NULL = createResult(
+        createPersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON)
     )
 
-    val INPUT_FEIL_PERSON_IKKE_FUNNET = buildInput(null, DigDirFeil.PERSON_IKKE_FUNNET)
+    val INPUT_FEIL_PERSON_IKKE_FUNNET = createInput(null, DigDirFeil.PERSON_IKKE_FUNNET)
 
-    val RESULT_FEIL_PERSON_IKKE_FUNNET = buildResult(
-        buildPersonData(
+    val RESULT_FEIL_PERSON_IKKE_FUNNET = createResult(
+        createPersonData(
             person = null,
             feil = FeilType.PERSON_IKKE_FUNNET
         )
     )
 
-    val INPUT_FEIL_STRENGT_FORTROLIG_ADRESSE = buildInput(null, DigDirFeil.STRENGT_FORTROLIG_ADRESSE)
+    val INPUT_FEIL_STRENGT_FORTROLIG_ADRESSE = createInput(null, DigDirFeil.STRENGT_FORTROLIG_ADRESSE)
 
-    val RESULT_FEIL_STRENGT_FORTROLIG_ADRESSE = buildResult(
-        buildPersonData(
+    val RESULT_FEIL_STRENGT_FORTROLIG_ADRESSE = createResult(
+        createPersonData(
             person = null,
             feil = FeilType.STRENGT_FORTROLIG_ADRESSE
         )
     )
 
     val INPUT_FEIL_STRENGT_FORTROLIG_UTENLANDSK_ADRESSE =
-        buildInput(null, DigDirFeil.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE)
+        createInput(null, DigDirFeil.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE)
 
-    val RESULT_FEIL_STRENGT_FORTROLIG_UTENLANDSK_ADRESSE = buildResult(
-        buildPersonData(
+    val RESULT_FEIL_STRENGT_FORTROLIG_UTENLANDSK_ADRESSE = createResult(
+        createPersonData(
             person = null,
             feil = FeilType.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE
         )
     )
 
-    val INPUT_FEIL_FORTROLIG_ADRESSE = buildInput(null, DigDirFeil.FORTROLIG_ADRESSE)
+    val INPUT_FEIL_FORTROLIG_ADRESSE = createInput(null, DigDirFeil.FORTROLIG_ADRESSE)
 
-    val RESULT_FEIL_FORTROLIG_ADRESSE = buildResult(
-        buildPersonData(
+    val RESULT_FEIL_FORTROLIG_ADRESSE = createResult(
+        createPersonData(
             person = null,
             feil = FeilType.FORTROLIG_ADRESSE
         )
     )
 
-    val INPUT_FEIL_SKJERMET = buildInput(null, DigDirFeil.SKJERMET)
+    val INPUT_FEIL_SKJERMET = createInput(null, DigDirFeil.SKJERMET)
 
-    val RESULT_FEIL_SKJERMET = buildResult(
-        buildPersonData(
+    val RESULT_FEIL_SKJERMET = createResult(
+        createPersonData(
             person = null,
             feil = FeilType.SKJERMET
         )
