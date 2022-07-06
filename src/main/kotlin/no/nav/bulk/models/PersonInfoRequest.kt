@@ -14,7 +14,7 @@ data class Person(
     val spraak: String? = null,
     val epostadresse: String? = null,
     val mobiltelefonnummer: String? = null,
-    val addresse: String? = null,
+    val adresse: String? = null,
     val leverandoerAdresse: String? = null,
     val leverandoerSertifikat: String? = null,
 )
