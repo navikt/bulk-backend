@@ -1,11 +1,7 @@
 package no.nav.bulk
 
 import no.nav.bulk.lib.filterAndMapDigDirResponse
-import no.nav.bulk.models.DigDirPersonInfo
-import no.nav.bulk.models.DigDirResponse
-import no.nav.bulk.models.PersonInfoResponse
 import org.junit.jupiter.api.Test
-import java.util.logging.Filter
 import kotlin.test.assertEquals
 
 class FilterAndMapTest {
@@ -102,7 +98,7 @@ class FilterAndMapTest {
     @Test
     fun testOutdatedNumberEpostNull() {
         val expected = FilterTestData.RESULT_OUTDATED_NUMBER_EPOST_NULL
-        val actual = filterAndMapDigDirResponse(FilterTestData.INPUT_OUTDATED_EPOST_NUMBER_NULL)
+        val actual = filterAndMapDigDirResponse(FilterTestData.INPUT_OUTDATED_NUMBER_EPOST_NULL)
         assertEquals(
             expected,
             actual,
