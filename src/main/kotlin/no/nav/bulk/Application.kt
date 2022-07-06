@@ -7,12 +7,19 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
-import no.nav.bulk.lib.getContactInfo
+import no.nav.bulk.lib.getAccessToken
+import no.nav.bulk.models.TokenEndpointResponse
 import no.nav.bulk.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as CNServer
 
 lateinit var client: HttpClient
+lateinit var token: TokenEndpointResponse
+
+suspend fun HttpClient.token(): TokenEndpointResponse {
+    token = token ?: getAccessToken(this)
+    return token
+}
 
 val personer = listOf(
     "07506535861",
@@ -42,11 +49,4 @@ fun main() {
             json()
         }
     }.start(wait = true)
-//    val scope = CoroutineScope(Dispatchers.IO)
-//    val job = scope.launch {
-//        getContactInfo(personer)
-//    }
-//    runBlocking {
-//        job.join()
-//    }
 }
