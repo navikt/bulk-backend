@@ -10,7 +10,6 @@ import no.nav.bulk.client
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.TokenEndpointResponse
-import no.nav.bulk.token
 
 suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse {
     val localClient = clientArg ?: client
@@ -32,9 +31,9 @@ suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse
 
 suspend fun getContactInfo(personnr: List<String>, clientArg: HttpClient? = null): DigDirResponse {
     val localClient = clientArg ?: client
-    val accessToken = localClient.token().access_token
+    val accessToken = getAccessToken(localClient)
     val res =
-            client.post(Endpoints.DIGDIR_KRR_API_URL) {
+            localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer $accessToken}")
                     append("Nav-Call-Id", UUID.randomUUID().toString())

@@ -8,18 +8,13 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import kotlinx.coroutines.*
 import no.nav.bulk.lib.getAccessToken
+import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.models.TokenEndpointResponse
 import no.nav.bulk.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as CNServer
 
 lateinit var client: HttpClient
-lateinit var token: TokenEndpointResponse
-
-suspend fun HttpClient.token(): TokenEndpointResponse {
-    token = token ?: getAccessToken(this)
-    return token
-}
 
 val personer = listOf(
     "07506535861",
@@ -28,7 +23,9 @@ val personer = listOf(
     "29438107647",
     "14466746291",
     "24457907822",
-    "01478520936"
+    "01478520936",
+    "12476939249",
+    "19087222260"
 )
 
 fun initializeHttpClient() = runBlocking {
