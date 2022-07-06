@@ -1,7 +1,7 @@
 package no.nav.bulk
 
 import no.nav.bulk.models.*
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 object FilterTestData {
 
@@ -12,9 +12,9 @@ object FilterTestData {
         reservert = false,
         spraak = "nb",
         epostadresse = "ola@nordmann.no",
-        epostadresseOppdatert = LocalDate.now().toString(),
+        epostadresseOppdatert = LocalDateTime.now().toString(),
         mobiltelefonnummer = "12345678",
-        mobiltelefonnummerOppdatert = LocalDate.now().toString(),
+        mobiltelefonnummerOppdatert = LocalDateTime.now().toString(),
         sikkerDigitalPostkasse = SikkerDigitalPostkasse(
             adresse = "Nordmannveien 12A",
             leverandoerAdresse = "Digipost",
@@ -65,8 +65,8 @@ object FilterTestData {
 
     val INPUT_OUTDATED_CONTACT_INFO = buildInput(
         DEFAULT_PERSON_INPUT.copy(
-            epostadresseOppdatert = LocalDate.now().minusMonths(18).toString(),
-            mobiltelefonnummerOppdatert = LocalDate.now().minusMonths(18).toString(),
+            epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
+            mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
         )
     )
 
@@ -80,7 +80,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_EPOST_NOT_NUMBER = buildInput(
         DEFAULT_PERSON_INPUT.copy(
-            epostadresseOppdatert = LocalDate.now().minusMonths(18).toString(),
+            epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
         )
     )
 
@@ -92,7 +92,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_NUMBER_NOT_EPOST = buildInput(
         DEFAULT_PERSON_INPUT.copy(
-            mobiltelefonnummerOppdatert = LocalDate.now().minusMonths(18).toString(),
+            mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
         )
     )
 
@@ -102,7 +102,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_NUMBER_EPOST_NULL = buildInput(
         DEFAULT_PERSON_INPUT.copy(
-            mobiltelefonnummerOppdatert = LocalDate.now().minusMonths(18).toString(),
+            mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
             epostadresse = null
         )
     )
@@ -113,7 +113,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_EPOST_NUMBER_NULL = buildInput(
         DEFAULT_PERSON_INPUT.copy(
-            epostadresseOppdatert = LocalDate.now().minusMonths(18).toString(),
+            epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
             mobiltelefonnummer = null
         )
     )
@@ -175,16 +175,16 @@ object FilterTestData {
             "6432" to DEFAULT_PERSON_INPUT.copy(personident = "6432", kanVarsles = false, reservert = true),
             "2345" to DEFAULT_PERSON_INPUT.copy(
                 personident = "2345",
-                epostadresseOppdatert = LocalDate.now().minusMonths(18).toString()
+                epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString()
             ),
             "5678" to DEFAULT_PERSON_INPUT.copy(
                 personident = "5678",
-                mobiltelefonnummerOppdatert = LocalDate.now().minusMonths(18).toString()
+                mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString()
             ),
             "7890" to DEFAULT_PERSON_INPUT.copy(
                 personident = "7890",
-                mobiltelefonnummerOppdatert = LocalDate.now().minusMonths(18).toString(),
-                epostadresseOppdatert = LocalDate.now().minusMonths(18).toString()
+                mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
+                epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString()
             ),
         ),
         feil = mapOf(
