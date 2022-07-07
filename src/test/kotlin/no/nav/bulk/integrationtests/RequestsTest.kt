@@ -63,20 +63,26 @@ class RequestsTest {
             configureRouting()
             install(ContentNegotiation) { json() }
         }
-        initializeHttpClient()
-        val testPersonidenter = listOf(
-            "07506535861",
-            "07428827184",
-            "1234",
-            "11111100000"
-        )
-        val response = getContactInfo(testPersonidenter)
+        try {
+            initializeHttpClient()
+            val testPersonidenter = listOf(
+                "07506535861",
+                "07428827184",
+                "1234",
+                "11111100000"
+            )
+            val response = getContactInfo(testPersonidenter)
 
-        if (response != null) {
-            assertEquals(2, response.feil.size)
-            assertEquals("person_ikke_funnet", response.feil["1234"]?.value)
-            assertEquals("person_ikke_funnet", response.feil["11111100000"]?.value)
+            if (response != null) {
+                assertEquals(2, response.feil.size)
+                assertEquals("person_ikke_funnet", response.feil["1234"]?.value)
+                assertEquals("person_ikke_funnet", response.feil["11111100000"]?.value)
+            }
+        } catch (e: Exception) {
+            println(e.stackTrace)
+            throw e
         }
+
     }
 
     @Test
@@ -86,29 +92,41 @@ class RequestsTest {
             configureRouting()
             install(ContentNegotiation) { json() }
         }
-        initializeHttpClient()
-        val testPersonidenter = listOf(
-            "07506535861",
-            "07428827184",
-        )
-        val response = getContactInfo(testPersonidenter)
 
-        if (response != null) {
-            assertEquals(true, response.personer.isNotEmpty())
-            assertEquals("nn", response.personer["07506535861"]?.spraak)
-            assertEquals(true, response.personer["07506535861"]?.kanVarsles)
-            assertEquals(2, response.personer.size)
+        try {
+            initializeHttpClient()
+            val testPersonidenter = listOf(
+                "07506535861",
+                "07428827184",
+            )
+            val response = getContactInfo(testPersonidenter)
+
+            if (response != null) {
+                assertEquals(true, response.personer.isNotEmpty())
+                assertEquals("nn", response.personer["07506535861"]?.spraak)
+                assertEquals(true, response.personer["07506535861"]?.kanVarsles)
+                assertEquals(2, response.personer.size)
+            }
+
+        } catch (e: Exception) {
+            println(e.stackTrace)
+            throw e
         }
     }
 
     @Test
     fun testGetAccessToken() = testApplication {
-        initializeHttpClient()
-        val tokenEndpointResponse = getAccessToken()
-        if (tokenEndpointResponse != null) {
-            assertEquals(3599, tokenEndpointResponse.expires_in)
-            assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
-            assertEquals("Bearer", tokenEndpointResponse.token_type)
+        try {
+            initializeHttpClient()
+            val tokenEndpointResponse = getAccessToken()
+            if (tokenEndpointResponse != null) {
+                assertEquals(3599, tokenEndpointResponse.expires_in)
+                assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
+                assertEquals("Bearer", tokenEndpointResponse.token_type)
+            }
+        } catch (e: Exception) {
+            println(e.stackTrace)
+            throw e
         }
     }
 }

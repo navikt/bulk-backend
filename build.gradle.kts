@@ -30,11 +30,14 @@ tasks {
         useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed")
+            showStandardStreams = true
         }
 
+        /*
         filter {
             includeTestsMatching("no.nav.bulk.lib.*")
         }
+         */
     }
 
     task ("integrationtest", Test::class) {
