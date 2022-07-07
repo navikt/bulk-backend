@@ -2,6 +2,7 @@ package no.nav.bulk.lib
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class FilterAndMapTest {
 
@@ -37,6 +38,7 @@ class FilterAndMapTest {
         val actual = filterAndMapDigDirResponse(FilterTestData.INPUT_KAN_VARSLES_TRUE)
         println("------- Env var: ${AuthConfig.CLIENT_ID}")
         assertEquals(expected, actual, "The correct PersonInfoResponse object was not returned for kanVarsles is true.")
+        fail("Should fail")
     }
 
     @Test
