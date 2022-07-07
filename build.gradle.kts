@@ -31,6 +31,24 @@ tasks {
         testLogging {
             events("passed", "skipped", "failed")
         }
+
+        filter {
+            includeTestsMatching("no.nav.bulk.lib.*")
+        }
+    }
+
+    task ("integrationtest", Test::class) {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
+
+        filter {
+            includeTestsMatching("no.nav.bulk.integrationtests.*")
+            excludeTestsMatching("no.nav.bulk.lib.*")
+        }
+
+        description = "Runs integration tests"
     }
 
     jar {
