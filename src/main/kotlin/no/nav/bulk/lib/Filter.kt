@@ -22,22 +22,23 @@ sealed class DigDirPersonValidationResult {
     class Fail(val feilType: FeilType) : DigDirPersonValidationResult()
 }
 
-fun isValidContactInfo(contactInfo: String?, dateContactInfoUpdated: String?): Boolean {
-    if (contactInfo == null) return false
+fun isValidUpdatedDate(dateContactInfoUpdated: String?): Boolean {
     val now = ZonedDateTime.now()
     val date = if (dateContactInfoUpdated != null) ZonedDateTime.parse(dateContactInfoUpdated) else return false
     return now.minusMonths(18).isBefore(date)
 }
 
-fun isValidContactInfo(personInfo: DigDirPerson): ContactInfoStatus {
-    val invalidEmail = !isValidContactInfo(personInfo.epostadresse, personInfo.epostadresseOppdatert)
-    val invalidPhone = !isValidContactInfo(personInfo.mobiltelefonnummer, personInfo.mobiltelefonnummerOppdatert)
-    if (invalidEmail && invalidPhone) return ContactInfoStatus.BOTH_INVALID
-    if (invalidEmail && personInfo.mobiltelefonnummer == null) return ContactInfoStatus.BOTH_INVALID
-    if (invalidPhone && personInfo.epostadresse == null) return ContactInfoStatus.BOTH_INVALID
-    if (personInfo.epostadresse == null && personInfo.mobiltelefonnummer == null) return ContactInfoStatus.NO_CONTACT_INFO
-    if (invalidEmail) return ContactInfoStatus.INVALID_EMAIL
-    if (invalidPhone) return ContactInfoStatus.INVALID_PHONE
+fun isValidUpdatedDate(personInfo: DigDirPerson): ContactInfoStatus {
+    val oudatedEmail = !isValidUpdatedDate(personInfo.epostadresseOppdatert)
+    val outdatedPhone = !isValidUpdatedDate(personInfo.mobiltelefonnummerOppdatert)
+    val nullEmail = personInfo.epostadresse == null
+    val nullPhone = personInfo.mobiltelefonnummer == null
+    if (oudatedEmail && outdatedPhone) return ContactInfoStatus.BOTH_INVALID
+    if (oudatedEmail && nullPhone) return ContactInfoStatus.BOTH_INVALID
+    if (outdatedPhone && nullEmail) return ContactInfoStatus.BOTH_INVALID
+    if (nullEmail && nullPhone) return ContactInfoStatus.NO_CONTACT_INFO
+    if (oudatedEmail || nullEmail) return ContactInfoStatus.INVALID_EMAIL
+    if (outdatedPhone || nullPhone) return ContactInfoStatus.INVALID_PHONE
     return ContactInfoStatus.OK
 }
 
@@ -47,7 +48,7 @@ fun validateDigDirPersonInfo(personInfo: DigDirPerson): DigDirPersonValidationRe
         return DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     }
     // check contact info (email and phone)
-    return when (isValidContactInfo(personInfo)) {
+    return when (isValidUpdatedDate(personInfo)) {
         ContactInfoStatus.OK -> DigDirPersonValidationResult.Success(SuccessCaveat.NONE)
         ContactInfoStatus.BOTH_INVALID -> DigDirPersonValidationResult.Fail(FeilType.UTDATERT_KONTAKTINFORMASJON)
         ContactInfoStatus.INVALID_EMAIL -> DigDirPersonValidationResult.Success(SuccessCaveat.OUTDATED_EMAIL)

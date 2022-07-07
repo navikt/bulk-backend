@@ -124,6 +124,17 @@ object FilterTestData {
         createPersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON)
     )
 
+    val INPUT_EPOST_NUMBER_NULL = createInput(
+        DEFAULT_PERSON_INPUT.copy(
+            epostadresse = null,
+            mobiltelefonnummer = null
+        )
+    )
+
+    val RESULT_EPOST_NUMBER_NULL = createResult(
+        createPersonData(null, FeilType.KAN_IKKE_VARSLES)
+    )
+
     val INPUT_FEIL_PERSON_IKKE_FUNNET = createInput(null, DigDirFeil.PERSON_IKKE_FUNNET)
 
     val RESULT_FEIL_PERSON_IKKE_FUNNET = createResult(

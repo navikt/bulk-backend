@@ -9,24 +9,25 @@ class FilterAndMapTest {
      * Test cases:
      * 1. Test that for an input of a person where kanVarsles is true, a corresponding PersonInfoResponse is returned.
      * 2. Test that for an input of a person where kanVarsles is false or reservert is false or aktiv is false,
-     * FeilType "reservert" is returned
+     * FeilType "kan_ikke_varsles" is returned
      * 3. Test that for an input where both epostadresseOppdatert
      * and mobiltelefonnummerOppdatert is older than 18 months, FeilType utdatert_kontaktinformasjon is returned.
      * 4. Test that for an input where epostadresseOppdaert is older than 18 months, but mobiltelefonnummerOppdatert is
      * not older than 18 months, a success response is returned only containing the phone number.
      * 5. Test that for an input where epostadresseOppdaert is not older than 18 months, but mobiltelefonnummerOppdatert is
      * older than 18 months, a success response is returned only containing the epost.
-     * 6. Test that for an input where there is "feil" on the input person "person_ikke_funnet", the equivalent FeiType
+     * 6. Test that for an input where epostadresse and mobiltelefonnummer are null, error on "kan_ikke_varsles" is returned
+     * 7. Test that for an input where there is "feil" on the input person "person_ikke_funnet", the equivalent FeiType
      * is returned.
-     * 7. Test that for an input where there is "feil" on the input person "strengt_fortrolig_adresse", the equivalent FeilType
+     * 8. Test that for an input where there is "feil" on the input person "strengt_fortrolig_adresse", the equivalent FeilType
      * is returned.
-     * 8. Test that for an input where there is "feil" on the input person "strengt_fortrolig_utenlandsk_adresse", the equivalent FeilType
+     * 9. Test that for an input where there is "feil" on the input person "strengt_fortrolig_utenlandsk_adresse", the equivalent FeilType
      * is returned.
-     * 9. Test that for an input where there is "feil" on the input person "fortrolig_adresse", the equivalent FeilType
+     * 10. Test that for an input where there is "feil" on the input person "fortrolig_adresse", the equivalent FeilType
      * is returned.
-     * 10. Test that for an input where there is "feil" on the input person "skjermet", the equivalent FeilType
+     * 11. Test that for an input where there is "feil" on the input person "skjermet", the equivalent FeilType
      * is returned.
-     * 11. Test for an input of multiple people with different parameters, the correct data is returned.
+     * 12. Test for an input of multiple people with different parameters, the correct data is returned.
      */
 
 
@@ -105,6 +106,19 @@ class FilterAndMapTest {
                     "but the epostadresse is null, return UTDATERT_KONTAKTINFORMASJON"
         )
     }
+
+    @Test
+    fun testNumberAndEpostNull() {
+        val expected = FilterTestData.RESULT_EPOST_NUMBER_NULL
+        val actual = filterAndMapDigDirResponse(FilterTestData.INPUT_EPOST_NUMBER_NULL)
+        assertEquals(
+            expected,
+            actual,
+            "If the mobiltelefonnummer and epost is null, KAN_IKKE_VARSLES should be returned"
+        )
+
+    }
+
     @Test
     fun testFeilPersonIkkeFunnet() {
         val expected = FilterTestData.RESULT_FEIL_PERSON_IKKE_FUNNET
