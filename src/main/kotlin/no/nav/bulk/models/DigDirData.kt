@@ -1,5 +1,7 @@
 package no.nav.bulk.models
 
+import kotlinx.serialization.SerialName
+
 
 @kotlinx.serialization.Serializable
 data class DigDirRequest(val personidenter: List<String>)
@@ -23,10 +25,19 @@ data class DigDirPerson(
  */
 @kotlinx.serialization.Serializable
 enum class DigDirFeil(val value: String) {
+    @SerialName("person_ikke_funnet")
     PERSON_IKKE_FUNNET("person_ikke_funnet"),
+
+    @SerialName("strengt_fortrolig_adresse")
     STRENGT_FORTROLIG_ADRESSE("strengt_fortrolig_adresse"),
+
+    @SerialName("strengt_fortrolig_utenlandsk_adresse")
     STRENGT_FORTROLIG_UTENLANDSK_ADRESSE("strengt_fortrolig_utenlandsk_adresse"),
+
+    @SerialName("fortrolig_adresse")
     FORTROLIG_ADRESSE("fortrolig_adresse"),
+
+    @SerialName("skjermet")
     SKJERMET("skjermet")
 }
 
@@ -38,7 +49,7 @@ enum class DigDirFeil(val value: String) {
  * @param SikkerDigitalPostkasse
  */
 @kotlinx.serialization.Serializable
-data class DigDirResponse(val personer: Map<String, DigDirPerson>, val feil: Map<String, String>)
+data class DigDirResponse(val personer: Map<String, DigDirPerson>, val feil: Map<String, DigDirFeil>)
 
 @kotlinx.serialization.Serializable
 data class SikkerDigitalPostkasse(

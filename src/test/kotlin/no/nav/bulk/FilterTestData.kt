@@ -1,7 +1,7 @@
 package no.nav.bulk
 
 import no.nav.bulk.models.*
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 object FilterTestData {
 
@@ -12,9 +12,9 @@ object FilterTestData {
         reservert = false,
         spraak = "nb",
         epostadresse = "ola@nordmann.no",
-        epostadresseOppdatert = LocalDateTime.now().toString(),
+        epostadresseOppdatert = ZonedDateTime.now().toString(),
         mobiltelefonnummer = "12345678",
-        mobiltelefonnummerOppdatert = LocalDateTime.now().toString(),
+        mobiltelefonnummerOppdatert = ZonedDateTime.now().toString(),
         sikkerDigitalPostkasse = SikkerDigitalPostkasse(
             adresse = "Nordmannveien 12A",
             leverandoerAdresse = "Digipost",
@@ -37,7 +37,7 @@ object FilterTestData {
             "1234" to person
         ),
         feil = if (feil == null) emptyMap() else mapOf(
-            "1234" to feil.value
+            "1234" to feil
         )
     )
 
@@ -61,14 +61,14 @@ object FilterTestData {
     val RESULT_KAN_VALRSLES_FALSE = createResult(
         createPersonData(
             null,
-            FeilType.RESERVERT
+            FeilType.KAN_IKKE_VARSLES
         )
     )
 
     val INPUT_OUTDATED_CONTACT_INFO = createInput(
         DEFAULT_PERSON_INPUT.copy(
-            epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
-            mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
+            epostadresseOppdatert = ZonedDateTime.now().minusMonths(18).toString(),
+            mobiltelefonnummerOppdatert = ZonedDateTime.now().minusMonths(18).toString(),
         )
     )
 
@@ -82,7 +82,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_EPOST_NOT_NUMBER = createInput(
         DEFAULT_PERSON_INPUT.copy(
-            epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
+            epostadresseOppdatert = ZonedDateTime.now().minusMonths(18).toString(),
         )
     )
 
@@ -94,7 +94,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_NUMBER_NOT_EPOST = createInput(
         DEFAULT_PERSON_INPUT.copy(
-            mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
+            mobiltelefonnummerOppdatert = ZonedDateTime.now().minusMonths(18).toString(),
         )
     )
 
@@ -104,7 +104,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_NUMBER_EPOST_NULL = createInput(
         DEFAULT_PERSON_INPUT.copy(
-            mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
+            mobiltelefonnummerOppdatert = ZonedDateTime.now().minusMonths(18).toString(),
             epostadresse = null
         )
     )
@@ -115,7 +115,7 @@ object FilterTestData {
 
     val INPUT_OUTDATED_EPOST_NUMBER_NULL = createInput(
         DEFAULT_PERSON_INPUT.copy(
-            epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString(),
+            epostadresseOppdatert = ZonedDateTime.now().minusMonths(18).toString(),
             mobiltelefonnummer = null
         )
     )
@@ -177,30 +177,30 @@ object FilterTestData {
             "6432" to DEFAULT_PERSON_INPUT.copy(personident = "6432", kanVarsles = false, reservert = true),
             "2345" to DEFAULT_PERSON_INPUT.copy(
                 personident = "2345",
-                epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString()
+                epostadresseOppdatert = ZonedDateTime.now().minusMonths(18).toString()
             ),
             "5678" to DEFAULT_PERSON_INPUT.copy(
                 personident = "5678",
-                mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString()
+                mobiltelefonnummerOppdatert = ZonedDateTime.now().minusMonths(18).toString()
             ),
             "7890" to DEFAULT_PERSON_INPUT.copy(
                 personident = "7890",
-                mobiltelefonnummerOppdatert = LocalDateTime.now().minusMonths(18).toString(),
-                epostadresseOppdatert = LocalDateTime.now().minusMonths(18).toString()
+                mobiltelefonnummerOppdatert = ZonedDateTime.now().minusMonths(18).toString(),
+                epostadresseOppdatert = ZonedDateTime.now().minusMonths(18).toString()
             ),
         ),
         feil = mapOf(
-            "1111" to DigDirFeil.PERSON_IKKE_FUNNET.value,
-            "2222" to DigDirFeil.SKJERMET.value,
-            "3333" to DigDirFeil.SKJERMET.value
+            "1111" to DigDirFeil.PERSON_IKKE_FUNNET,
+            "2222" to DigDirFeil.SKJERMET,
+            "3333" to DigDirFeil.SKJERMET
         )
     )
 
     val RESULT_MULTIPLE_PEOPLE = PeopleDataResponse(
         personer = mapOf(
             "1234" to PersonData(DEFAULT_PERSON_RESULT, null),
-            "4321" to PersonData(null, FeilType.RESERVERT),
-            "6432" to PersonData(null, FeilType.RESERVERT),
+            "4321" to PersonData(null, FeilType.KAN_IKKE_VARSLES),
+            "6432" to PersonData(null, FeilType.KAN_IKKE_VARSLES),
             "2345" to PersonData(DEFAULT_PERSON_RESULT.copy(personident = "2345", epostadresse = null), null),
             "5678" to PersonData(DEFAULT_PERSON_RESULT.copy(personident = "5678", mobiltelefonnummer = null), null),
             "7890" to PersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON),

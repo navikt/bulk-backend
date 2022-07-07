@@ -4,6 +4,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import no.nav.bulk.lib.filterAndMapDigDirResponse
 import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.models.PeopleDataRequest
 
@@ -22,7 +23,8 @@ fun Application.configureRouting() {
             val requestData = call.receive<PeopleDataRequest>()
             val res = getContactInfo(requestData.personidenter)
             // Add filter here
-            call.respond(res)
+            val filteredPeopleInfo = filterAndMapDigDirResponse(res)
+            call.respond(filteredPeopleInfo)
         }
     }
 }

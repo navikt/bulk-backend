@@ -1,7 +1,7 @@
 package no.nav.bulk.lib
 
 import no.nav.bulk.models.*
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 enum class SuccessCaveat {
     NONE,
@@ -22,8 +22,8 @@ sealed class DigDirPersonValidationResult {
 }
 
 fun isValidDate(dateString: String?): Boolean {
-    val now = LocalDateTime.now()
-    val date = if (dateString != null) LocalDateTime.parse(dateString) else null
+    val now = ZonedDateTime.now()
+    val date = if (dateString != null) ZonedDateTime.parse(dateString) else null
     return if (date != null) now.minusMonths(18).isBefore(date) else false
 }
 
@@ -43,7 +43,7 @@ fun validateDigDirPersonInfo(personInfo: DigDirPerson): DigDirPersonValidationRe
 
     // When person is "null" in DigDir, it means that the person is not allowed to be contacted
     if (personInfo.kanVarsles == null || personInfo.kanVarsles == false) {
-        return DigDirPersonValidationResult.Fail(FeilType.RESERVERT)
+        return DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     }
     // check contact info (email and phone)
     return when (isValidContactInfo(personInfo)) {
@@ -81,7 +81,7 @@ fun filterAndMapDigDirResponse(digDirResponse: DigDirResponse): PeopleDataRespon
         }
     }
     for ((personident, feil) in digDirResponse.feil) {
-        when (DigDirFeil.valueOf(feil.uppercase())) {
+        when (DigDirFeil.valueOf(feil.name)) {
             DigDirFeil.PERSON_IKKE_FUNNET -> peopleResponseMap[personident] =
                 PersonData(null, FeilType.PERSON_IKKE_FUNNET)
             DigDirFeil.SKJERMET -> peopleResponseMap[personident] =
