@@ -35,6 +35,11 @@ jobs:
           java-version: '17.x'
       - name: test and build
         run: ./gradlew build
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v3
+        if: always() # always run even if the previous step fails
+        with:
+          report_paths: '**/build/test-results/test/TEST-*.xml'
       - name: build docker image
         run: docker build . --pull -t ${{ needs.set_version.outputs.image }}
       - name: push docker image

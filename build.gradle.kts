@@ -30,7 +30,6 @@ tasks {
         useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed")
-            showStandardStreams = true
         }
 
         /*
@@ -40,7 +39,7 @@ tasks {
          */
     }
 
-    task ("integrationtest", Test::class) {
+    task("integrationtest", Test::class) {
         useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed")
