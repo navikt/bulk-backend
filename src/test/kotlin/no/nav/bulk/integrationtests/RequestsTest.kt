@@ -15,6 +15,18 @@ import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
 
 class RequestsTest {
+    /*
+        Test cases:
+            1. Test if the applications responds on the /isalive route, with the correct status and response call.
+            2. Test if the applications responds on the /isready route, with the correct status and response call.
+            3. Test that invalid personidents responds with the correct error message, specified in the
+               "feil" Map.
+            4. Checks that the call to getContactInfo returns the personidents with additional contact info,
+               and correct language and "kanVarsles"-status. Initializes the HTTP-client as well.
+            5. Checks that the TokenEndPointResponse gets generated and that the variables (token_type and
+               expires_in) are correct.
+     */
+
     @Test
     fun testIsAlive() = testApplication {
         application {
