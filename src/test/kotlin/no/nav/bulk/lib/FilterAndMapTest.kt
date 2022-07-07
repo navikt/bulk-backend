@@ -1,6 +1,5 @@
-package no.nav.bulk
+package no.nav.bulk.lib
 
-import no.nav.bulk.lib.filterAndMapDigDirResponse
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

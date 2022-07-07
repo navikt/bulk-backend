@@ -1,4 +1,4 @@
-package no.nav.bulk
+package no.nav.bulk.lib
 
 import no.nav.bulk.models.*
 import java.time.ZonedDateTime
