@@ -1,5 +1,6 @@
 package no.nav.bulk.plugins
 
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -23,8 +24,11 @@ fun Application.configureRouting() {
             val requestData = call.receive<PeopleDataRequest>()
             val res = getContactInfo(requestData.personidenter)
             // Add filter here
-            val filteredPeopleInfo = filterAndMapDigDirResponse(res)
-            call.respond(filteredPeopleInfo)
+            if (res != null) {
+                val filteredPeopleInfo = filterAndMapDigDirResponse(res)
+                call.respond(filteredPeopleInfo)
+            } else
+                call.respond(HttpStatusCode.InternalServerError)
         }
     }
 }

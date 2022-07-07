@@ -1,4 +1,4 @@
-package no.nav.bulk.lib
+package no.nav.bulk.integrationtests
 
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -8,6 +8,8 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
 import no.nav.bulk.initializeHttpClient
+import no.nav.bulk.lib.getAccessToken
+import no.nav.bulk.lib.getContactInfo
 import kotlin.test.*
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
@@ -56,9 +58,11 @@ class RequestsTest {
         )
         val response = getContactInfo(testPersonidenter)
 
-        assertEquals(2, response.feil.size)
-        assertEquals("person_ikke_funnet", response.feil["1234"])
-        assertEquals("person_ikke_funnet", response.feil["11111100000"])
+        if (response != null) {
+            assertEquals(2, response.feil.size)
+            assertEquals("person_ikke_funnet", response.feil["1234"]?.value)
+            assertEquals("person_ikke_funnet", response.feil["11111100000"]?.value)
+        }
     }
 
     @Test
@@ -75,18 +79,22 @@ class RequestsTest {
         )
         val response = getContactInfo(testPersonidenter)
 
-        assertEquals(true, response.personer.isNotEmpty())
-        assertEquals("nn", response.personer["07506535861"]?.spraak)
-        assertEquals(true, response.personer["07506535861"]?.kanVarsles)
-        assertEquals(2, response.personer.size)
+        if (response != null) {
+            assertEquals(true, response.personer.isNotEmpty())
+            assertEquals("nn", response.personer["07506535861"]?.spraak)
+            assertEquals(true, response.personer["07506535861"]?.kanVarsles)
+            assertEquals(2, response.personer.size)
+        }
     }
 
     @Test
     fun testGetAccessToken() = testApplication {
         initializeHttpClient()
         val tokenEndpointResponse = getAccessToken()
-        assertEquals(3599, tokenEndpointResponse.expires_in)
-        assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
-        assertEquals("Bearer", tokenEndpointResponse.token_type)
+        if (tokenEndpointResponse != null) {
+            assertEquals(3599, tokenEndpointResponse.expires_in)
+            assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
+            assertEquals("Bearer", tokenEndpointResponse.token_type)
+        }
     }
 }
