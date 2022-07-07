@@ -10,9 +10,11 @@ import io.ktor.server.testing.*
 import no.nav.bulk.initializeHttpClient
 import no.nav.bulk.lib.getAccessToken
 import no.nav.bulk.lib.getContactInfo
-import kotlin.test.*
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class RequestsTest {
     /*
