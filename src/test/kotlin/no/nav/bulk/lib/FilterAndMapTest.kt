@@ -35,6 +35,7 @@ class FilterAndMapTest {
     fun testKanVarslesIsTrue() {
         val expected = FilterTestData.RESULT_KAN_VALRSLES_TRUE
         val actual = filterAndMapDigDirResponse(FilterTestData.INPUT_KAN_VARSLES_TRUE)
+        println("------- Env var: ${AuthConfig.CLIENT_ID}")
         assertEquals(expected, actual, "The correct PersonInfoResponse object was not returned for kanVarsles is true.")
     }
 
