@@ -14,5 +14,5 @@ object AuthConfig {
 
 object Endpoints {
     const val DIGDIR_KRR_API_URL = "https://digdir-krr-proxy.dev.intern.nav.no/rest/v1/personer"
-    val TOKEN_ENDPOINT = dotenv["AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"]!!
+    val TOKEN_ENDPOINT = dotenv["AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"] ?: "https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token"
 }
