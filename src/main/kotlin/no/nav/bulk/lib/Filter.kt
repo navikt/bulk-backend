@@ -10,9 +10,10 @@ enum class SuccessCaveat {
 }
 
 enum class ContactInfoStatus {
-    BOTH_OUTDATED,
-    OUTDATED_EMAIL,
-    OUTDATED_PHONE,
+    BOTH_INVALID,
+    INVALID_EMAIL,
+    INVALID_PHONE,
+    NO_CONTACT_INFO,
     OK
 }
 
@@ -21,39 +22,38 @@ sealed class DigDirPersonValidationResult {
     class Fail(val feilType: FeilType) : DigDirPersonValidationResult()
 }
 
-fun isValidDate(dateString: String?): Boolean {
+fun isValidContactInfo(contactInfo: String?, dateContactInfoUpdated: String?): Boolean {
+    if (contactInfo == null) return false
     val now = ZonedDateTime.now()
-    val date = if (dateString != null) ZonedDateTime.parse(dateString) else null
-    return if (date != null) now.minusMonths(18).isBefore(date) else false
+    val date = if (dateContactInfoUpdated != null) ZonedDateTime.parse(dateContactInfoUpdated) else return false
+    return now.minusMonths(18).isBefore(date)
 }
 
 fun isValidContactInfo(personInfo: DigDirPerson): ContactInfoStatus {
-    val invalidEmail = !isValidDate(personInfo.epostadresseOppdatert)
-    val invalidPhone = !isValidDate(personInfo.mobiltelefonnummerOppdatert)
-    if (invalidEmail && invalidPhone) return ContactInfoStatus.BOTH_OUTDATED
-    if (invalidEmail && personInfo.mobiltelefonnummer == null) return ContactInfoStatus.BOTH_OUTDATED
-    if (invalidPhone && personInfo.epostadresse == null) return ContactInfoStatus.BOTH_OUTDATED
-    if (invalidEmail) return ContactInfoStatus.OUTDATED_EMAIL
-    if (invalidPhone) return ContactInfoStatus.OUTDATED_PHONE
+    val invalidEmail = !isValidContactInfo(personInfo.epostadresse, personInfo.epostadresseOppdatert)
+    val invalidPhone = !isValidContactInfo(personInfo.mobiltelefonnummer, personInfo.mobiltelefonnummerOppdatert)
+    if (invalidEmail && invalidPhone) return ContactInfoStatus.BOTH_INVALID
+    if (invalidEmail && personInfo.mobiltelefonnummer == null) return ContactInfoStatus.BOTH_INVALID
+    if (invalidPhone && personInfo.epostadresse == null) return ContactInfoStatus.BOTH_INVALID
+    if (personInfo.epostadresse == null && personInfo.mobiltelefonnummer == null) return ContactInfoStatus.NO_CONTACT_INFO
+    if (invalidEmail) return ContactInfoStatus.INVALID_EMAIL
+    if (invalidPhone) return ContactInfoStatus.INVALID_PHONE
     return ContactInfoStatus.OK
 }
 
 fun validateDigDirPersonInfo(personInfo: DigDirPerson): DigDirPersonValidationResult {
-
-
     // When person is "null" in DigDir, it means that the person is not allowed to be contacted
-    if (personInfo.kanVarsles == null || personInfo.kanVarsles == false) {
+    if (personInfo.kanVarsles != true || personInfo.reservert != false || personInfo.aktiv != true) {
         return DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     }
     // check contact info (email and phone)
     return when (isValidContactInfo(personInfo)) {
         ContactInfoStatus.OK -> DigDirPersonValidationResult.Success(SuccessCaveat.NONE)
-        ContactInfoStatus.BOTH_OUTDATED -> DigDirPersonValidationResult.Fail(FeilType.UTDATERT_KONTAKTINFORMASJON)
-        ContactInfoStatus.OUTDATED_EMAIL -> DigDirPersonValidationResult.Success(SuccessCaveat.OUTDATED_EMAIL)
-        ContactInfoStatus.OUTDATED_PHONE -> DigDirPersonValidationResult.Success(SuccessCaveat.OUTDATED_PHONE)
+        ContactInfoStatus.BOTH_INVALID -> DigDirPersonValidationResult.Fail(FeilType.UTDATERT_KONTAKTINFORMASJON)
+        ContactInfoStatus.INVALID_EMAIL -> DigDirPersonValidationResult.Success(SuccessCaveat.OUTDATED_EMAIL)
+        ContactInfoStatus.INVALID_PHONE -> DigDirPersonValidationResult.Success(SuccessCaveat.OUTDATED_PHONE)
+        ContactInfoStatus.NO_CONTACT_INFO -> DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     }
-
-    // test outdated contact info
 }
 
 fun mapToPersonData(personInfo: DigDirPerson, caveat: SuccessCaveat): PersonData {
@@ -74,7 +74,9 @@ fun filterAndMapDigDirResponse(digDirResponse: DigDirResponse): PeopleDataRespon
     val peopleResponseMap = mutableMapOf<String, PersonData>()
 
     for ((personident, personInfo) in digDirResponse.personer) {
-        when (val result = validateDigDirPersonInfo(personInfo)) {
+        val result = validateDigDirPersonInfo(personInfo)
+        if (result is DigDirPersonValidationResult.Fail) println(result.feilType)
+        when (result) {
             is DigDirPersonValidationResult.Fail -> peopleResponseMap[personident] = PersonData(null, result.feilType)
             is DigDirPersonValidationResult.Success -> peopleResponseMap[personident] =
                 mapToPersonData(personInfo, result.caveat)
