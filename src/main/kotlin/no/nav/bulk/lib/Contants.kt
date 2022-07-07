@@ -2,7 +2,9 @@ package no.nav.bulk.lib
 
 import io.github.cdimascio.dotenv.dotenv
 
-val dotenv = dotenv()
+val dotenv = dotenv {
+    ignoreIfMissing = true
+}
 
 object AuthConfig {
     const val SCOPE = "api://dev-gcp.team-rocket.digdir-krr-proxy/.default"
