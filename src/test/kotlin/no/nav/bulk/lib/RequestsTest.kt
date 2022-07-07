@@ -9,7 +9,6 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
 import no.nav.bulk.initializeHttpClient
 import kotlin.test.*
-import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
 
@@ -42,11 +41,26 @@ class RequestsTest {
     }
 
     @Test
-    fun testInvalidPersons() {
-        assertEquals(true, true)
+    fun testInvalidPersons() = testApplication {
+        application {
+            configureHTTP()
+            configureRouting()
+            install(ContentNegotiation) { json() }
+        }
+        initializeHttpClient()
+        val testPersonidenter = listOf(
+            "07506535861",
+            "07428827184",
+            "1234",
+            "11111100000"
+        )
+        val response = getContactInfo(testPersonidenter)
+
+        assertEquals(2, response.feil.size)
+        assertEquals("person_ikke_funnet", response.feil["1234"])
+        assertEquals("person_ikke_funnet", response.feil["11111100000"])
     }
 
-    /*
     @Test
     fun testPersons() = testApplication {
         application {
@@ -54,17 +68,18 @@ class RequestsTest {
             configureRouting()
             install(ContentNegotiation) { json() }
         }
-        val testPersonidenter =
-            listOf(
-                "07506535861",
-                "07428827184",
-            )
         initializeHttpClient()
+        val testPersonidenter = listOf(
+            "07506535861",
+            "07428827184",
+        )
         val response = getContactInfo(testPersonidenter)
-        println(response)
-        assertEquals(true, response.personer.isNotEmpty())
-    }
 
+        assertEquals(true, response.personer.isNotEmpty())
+        assertEquals("nn", response.personer["07506535861"]?.spraak)
+        assertEquals(true, response.personer["07506535861"]?.kanVarsles)
+        assertEquals(2, response.personer.size)
+    }
 
     @Test
     fun testGetAccessToken() = testApplication {
@@ -74,7 +89,4 @@ class RequestsTest {
         assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
         assertEquals("Bearer", tokenEndpointResponse.token_type)
     }
-
-     */
-
 }
