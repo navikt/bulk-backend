@@ -30,16 +30,18 @@ jobs:
     needs: set_version
     steps:
       - uses: actions/checkout@v3
+        env:
+          AZURE_APP_CLIENT_ID: '${{ secrets.AZURE_APP_CLIENT_ID }}'
+          AZURE_APP_CLIENT_SECRET: '${{ secrets.AZURE_APP_CLIENT_SECRET }}'
+          AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: '${{ secrets.AZURE_APP_CLIENT_SECRET }}'
       - uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
       - name: test and build
-        env:
-          AZURE_APP_CLIENT_ID: ${{ secrets.AZURE_APP_CLIENT_ID }}
-          AZURE_APP_CLIENT_SECRET: ${{ secrets.AZURE_APP_CLIENT_SECRET }}
-          AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: ${{ secrets.AZURE_APP_CLIENT_SECRET }}
         run: ./gradlew build
+      - name: "Echo test"
+        run: 'echo $AZURE_APP_CLIENT_ID'
       - name: Publish test report
         uses: mikepenz/action-junit-report@v3
         if: always() # always run even if the previous step fails
