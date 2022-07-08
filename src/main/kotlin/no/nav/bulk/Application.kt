@@ -6,11 +6,9 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import kotlinx.coroutines.*
-import no.nav.bulk.lib.getAccessToken
-import no.nav.bulk.lib.getContactInfo
-import no.nav.bulk.models.TokenEndpointResponse
-import no.nav.bulk.plugins.*
+import kotlinx.coroutines.runBlocking
+import no.nav.bulk.plugins.configureHTTP
+import no.nav.bulk.plugins.configureRouting
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as CNServer
 

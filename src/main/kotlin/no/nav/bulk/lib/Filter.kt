@@ -76,7 +76,6 @@ fun filterAndMapDigDirResponse(digDirResponse: DigDirResponse): PeopleDataRespon
 
     for ((personident, personInfo) in digDirResponse.personer) {
         val result = validateDigDirPersonInfo(personInfo)
-        if (result is DigDirPersonValidationResult.Fail) println(result.feilType)
         when (result) {
             is DigDirPersonValidationResult.Fail -> peopleResponseMap[personident] = PersonData(null, result.feilType)
             is DigDirPersonValidationResult.Success -> peopleResponseMap[personident] =
