@@ -33,11 +33,9 @@ tasks {
             events("passed", "skipped", "failed")
         }
 
-        /*
         filter {
             includeTestsMatching("no.nav.bulk.lib.*")
         }
-         */
     }
 
     task("integrationtest", Test::class) {
@@ -54,28 +52,6 @@ tasks {
         description = "Runs integration tests"
     }
 
-    /*
-    jar {
-        archiveFileName.set("app.jar")
-
-        manifest {
-            attributes["Main-Class"] = "no.nav.bulk.ApplicationKt"
-            attributes["Class-Path"] = configurations.runtimeClasspath.get().joinToString(separator = " ") {
-                it.name
-            }
-        }
-        doLast {
-            configurations.runtimeClasspath.get()
-                .filter { it.name != "app.jar" }
-                .forEach {
-                    val file = File("$buildDir/libs/${it.name}")
-                    if (!file.exists())
-                        it.copyTo(file)
-                }
-        }
-    }
-
-     */
 }
 
 repositories {
