@@ -14,7 +14,7 @@ fun Application.configureHTTP() {
         allowHeadersPrefixed("Nav-")
         // anyHost()
         allowHost("localhost:3000")
-        allowHost("bulk.dev.intern.nav.no")
+        allowHost("https://bulk.dev.intern.nav.no")
     }
     install(DefaultHeaders) {
         header("X-Engine", "Ktor") // will send this header with each response
