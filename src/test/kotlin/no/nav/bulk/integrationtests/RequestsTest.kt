@@ -12,6 +12,7 @@ import no.nav.bulk.lib.getAccessToken
 import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -28,7 +29,7 @@ class RequestsTest {
                expires_in) are correct.
      */
 
-    //@Test
+    @Test
     fun testIsAlive() = testApplication {
         application {
             configureHTTP()
@@ -42,7 +43,7 @@ class RequestsTest {
     }
 
 
-    // @Test
+    @Test
     fun testIsReady() = testApplication {
         application {
             configureHTTP()
@@ -55,7 +56,7 @@ class RequestsTest {
         assertTrue("contains quotes") { response.body<String>().contains("\"") }
     }
 
-    //@Test
+    @Test
     fun testInvalidPersons() = testApplication {
         application {
             configureHTTP()
@@ -84,7 +85,7 @@ class RequestsTest {
 
     }
 
-    // @Test
+    @Test
     fun testPersons() = testApplication {
         application {
             configureHTTP()
@@ -113,7 +114,7 @@ class RequestsTest {
         }
     }
 
-    // @Test
+    @Test
     fun testGetAccessToken() = testApplication {
         try {
             initializeHttpClient()
