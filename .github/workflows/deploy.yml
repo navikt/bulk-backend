@@ -41,8 +41,6 @@ jobs:
           distribution: 'temurin'
       - name: test and build
         run: ./gradlew build
-      - name: "Echo test"
-        run: 'echo $AZURE_APP_CLIENT_ID'
       - name: Publish test report
         uses: mikepenz/action-junit-report@v3
         if: always() # always run even if the previous step fails

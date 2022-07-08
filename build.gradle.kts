@@ -7,7 +7,7 @@ plugins {
     application
     kotlin("jvm") version "1.7.0"
     kotlin("plugin.serialization") version "1.7.0"
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    //id("com.github.johnrengelman.shadow") version "7.1.2"   || Shadow JAR
 }
 
 group = "no.nav.bulk"
@@ -33,11 +33,9 @@ tasks {
             events("passed", "skipped", "failed")
         }
 
-        /*
         filter {
             includeTestsMatching("no.nav.bulk.lib.*")
         }
-         */
     }
 
     task("integrationtest", Test::class) {
@@ -54,7 +52,6 @@ tasks {
         description = "Runs integration tests"
     }
 
-    /*
     jar {
         archiveFileName.set("app.jar")
 
@@ -74,8 +71,6 @@ tasks {
                 }
         }
     }
-
-     */
 }
 
 repositories {
