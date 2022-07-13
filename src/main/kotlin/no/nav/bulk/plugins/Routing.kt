@@ -2,6 +2,7 @@ package no.nav.bulk.plugins
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -29,6 +30,14 @@ fun Application.configureRouting() {
                 call.respond(filteredPeopleInfo)
             } else
                 call.respond(HttpStatusCode.InternalServerError)
+        }
+        route("/auth") {
+            authenticate {
+                get("/test") {
+                    call.request.headers.entries().forEach { println("${it.key} : ${it.value}") } 
+                    call.respond("Authenticated")
+                }
+            }
         }
     }
 }
