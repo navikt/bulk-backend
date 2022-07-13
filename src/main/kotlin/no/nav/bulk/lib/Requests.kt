@@ -6,11 +6,11 @@ import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.http.*
-import java.util.UUID
 import no.nav.bulk.client
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.TokenEndpointResponse
+import java.util.*
 
 suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse? {
     val localClient = clientArg ?: client
@@ -20,10 +20,12 @@ suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse
             setBody(
                 MultiPartFormDataContent(
                     formData {
-                        append("grant_type", "client_credentials")
+                        append("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
                         append("scope", AuthConfig.SCOPE)
                         append("client_id", AuthConfig.CLIENT_ID)
                         append("client_secret", AuthConfig.CLIENT_SECRET)
+                        append("requested_token", "on_behalf_of")
+                        append("assertion", assertion)
                     }
                 )
             )
@@ -34,9 +36,10 @@ suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse
     return response.body()
 }
 
-suspend fun getContactInfo(personnr: List<String>, clientArg: HttpClient? = null): DigDirResponse? {
+suspend fun getContactInfo(personnr: List<String>,
+                           clientArg: HttpClient? = null,
+                           accessToken: String): DigDirResponse? {
     val localClient = clientArg ?: client
-    val accessToken = getAccessToken(localClient)?.access_token
     val res = try {
         localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
             headers {

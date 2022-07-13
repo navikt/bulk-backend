@@ -1,12 +1,15 @@
 package no.nav.bulk.plugins
 
+import com.auth0.jwt.JWT
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import no.nav.bulk.lib.filterAndMapDigDirResponse
+import no.nav.bulk.lib.getAccessToken
 import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.models.PeopleDataRequest
 
@@ -21,16 +24,48 @@ fun Application.configureRouting() {
             call.respond("Ready")
         }
 
-        post("/personer") {
-            val requestData = call.receive<PeopleDataRequest>()
-            val res = getContactInfo(requestData.personidenter)
-            // Add filter here
-            if (res != null) {
-                val filteredPeopleInfo = filterAndMapDigDirResponse(res)
-                call.respond(filteredPeopleInfo)
-            } else
-                call.respond(HttpStatusCode.InternalServerError)
+        authenticate {
+            post("/personer") {
+                // get authorization header
+                val wonderWallccessToken = context.getWonderwallAccessToken()
+
+                // parse token
+                val jwt = JWT().decodeJwt(wonderWallccessToken)
+                val assertion = jwt.token
+
+                // request now token scoped to the downstream api resource
+                val tokenEndpointResponse = getAccessToken(null, assertion)
+
+                // return if invalid
+                if (tokenEndpointResponse == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                    return@post
+                }
+                lateinit var requestData: PeopleDataRequest
+                try {
+                    requestData = call.receive()
+                } catch (e: Exception) {
+                    when (e) {
+                        is RequestAlreadyConsumedException,
+                        is CannotTransformContentToTypeException -> {
+                            call.respond(HttpStatusCode.BadRequest)
+                        }
+                        else -> call.respond(HttpStatusCode.BadRequest) // Muligens endre?
+                    }
+                    return@post
+                }
+
+                val digDirResponse = getContactInfo(requestData.personidenter,
+                                                    accessToken=tokenEndpointResponse.access_token)
+                // Add filter here
+                if (digDirResponse != null) {
+                    val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
+                    call.respond(filteredPeopleInfo)
+                } else
+                    call.respond(HttpStatusCode.InternalServerError)
+            }
         }
+
         route("/auth") {
             authenticate {
                 get("/test") {
@@ -41,3 +76,6 @@ fun Application.configureRouting() {
         }
     }
 }
+
+
+fun ApplicationCall.getWonderwallAccessToken(): String = request.parseAuthorizationHeader().toString()
