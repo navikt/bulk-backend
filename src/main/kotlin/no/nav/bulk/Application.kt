@@ -14,23 +14,13 @@ import kotlinx.serialization.json.Json
 import no.nav.bulk.plugins.configureAuth
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as CNServer
 
 lateinit var client: HttpClient
-
-val personer = listOf(
-    "07506535861",
-    "07428827184",
-    "05417034147",
-    "29438107647",
-    "14466746291",
-    "24457907822",
-    "01478520936",
-    "12476939249",
-    "19087222260"
-)
 
 fun initializeHttpClient() = runBlocking {
     val newClient = HttpClient(CIO) {
@@ -45,8 +35,10 @@ fun initializeHttpClient() = runBlocking {
     client = newClient
 }
 
+val logger: Logger = LoggerFactory.getLogger("no.nav.bulk")
+
 fun main() {
-    System.setProperty("org.slf4j.simpleLogger.logFile", "System.out");
+    System.setProperty("org.slf4j.simpleLogger.logFile", "System.out")
     initializeHttpClient()
     val env = applicationEngineEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load())
