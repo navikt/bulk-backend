@@ -71,7 +71,7 @@ class RequestsTest {
                 "1234",
                 "11111100000"
             )
-            val response = getContactInfo(testPersonidenter)
+            val response = getContactInfo(testPersonidenter, accessToken = "")
 
             if (response != null) {
                 assertEquals(2, response.feil.size)
@@ -99,7 +99,7 @@ class RequestsTest {
                 "07506535861",
                 "07428827184",
             )
-            val response = getContactInfo(testPersonidenter)
+            val response = getContactInfo(testPersonidenter, accessToken = "")
 
             if (response != null) {
                 assertEquals(true, response.personer.isNotEmpty())
@@ -118,7 +118,7 @@ class RequestsTest {
     fun testGetAccessToken() = testApplication {
         try {
             initializeHttpClient()
-            val tokenEndpointResponse = getAccessToken()
+            val tokenEndpointResponse = getAccessToken(assertion = "")
             if (tokenEndpointResponse != null) {
                 assertEquals(3599, tokenEndpointResponse.expires_in)
                 assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
