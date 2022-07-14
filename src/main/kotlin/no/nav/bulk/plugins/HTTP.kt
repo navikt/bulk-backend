@@ -19,7 +19,7 @@ fun Application.configureHTTP() {
         allowHeader(HttpHeaders.ContentType)
         allowHeadersPrefixed("Nav-")
         allowHost("localhost:3000")
-        allowHost("bulk.dev.intern.nav.no")
+        allowHost("bulk.dev.intern.nav.no", schemes = listOf("https"))
     }
     install(DefaultHeaders) {
         header("X-Engine", "Ktor") // will send this header with each response
