@@ -12,7 +12,7 @@ import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.TokenEndpointResponse
 import java.util.*
 
-suspend fun getAccessToken(clientArg: HttpClient? = null): TokenEndpointResponse? {
+suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): TokenEndpointResponse? {
     val localClient = clientArg ?: client
 
     val response = try {
