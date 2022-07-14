@@ -9,6 +9,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.defaultheaders.*
 import no.nav.bulk.lib.AuthConfig
+import no.nav.bulk.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -38,13 +39,14 @@ fun Application.configureAuth() {
             validate { credentials: JWTCredential ->
                 try {
                     requireNotNull(credentials.payload.audience) {
-                        "Auth: Missing audience in token"
+                        logger.error("Auth: Missing audience in token")
                     }
                     require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
-                        "Auth: Valid audience not found in claims"
+                        logger.error( "Auth: Valid audience not found in claims")
                     }
                     JWTPrincipal(credentials.payload)
                 } catch (e: Throwable) {
+                    logger.error("Auth: Error validating token", e)
                     null
                 }
             }

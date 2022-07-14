@@ -11,10 +11,10 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.plugins.configureAuth
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
@@ -47,10 +47,11 @@ fun initializeHttpClient() = runBlocking {
     client = newClient
 }
 
+val logger: Logger = LoggerFactory.getLogger("ktor.application")
+
 fun main() {
     initializeHttpClient()
     val env = applicationEngineEnvironment {
-        log = LoggerFactory.getLogger("ktor.application")
         config = HoconApplicationConfig(ConfigFactory.load())
         module {
             configureRouting()
