@@ -9,7 +9,6 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.defaultheaders.*
 import no.nav.bulk.lib.AuthConfig
-import no.nav.bulk.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -28,6 +27,7 @@ fun Application.configureHTTP() {
 }
 
 fun Application.configureAuth() {
+    val logger = log
     install(Authentication) {
         jwt {
             // provides a JWTVerifier that is used to verify a token format and signature
