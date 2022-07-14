@@ -11,6 +11,7 @@ import io.ktor.server.routing.*
 import no.nav.bulk.lib.filterAndMapDigDirResponse
 import no.nav.bulk.lib.getAccessToken
 import no.nav.bulk.lib.getContactInfo
+import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
 
 fun Application.configureRouting() {
@@ -47,7 +48,7 @@ fun Application.configureRouting() {
                 try {
                     requestData = call.receive()
                 } catch (e: Exception) {
-                    application.log.error(e.message, e)
+                    logger.error(e.message, e)
                     when (e) {
                         is RequestAlreadyConsumedException,
                         is CannotTransformContentToTypeException -> {
