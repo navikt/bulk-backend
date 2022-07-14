@@ -17,7 +17,9 @@ fun Application.configureRouting() {
 
     routing {
         get("/isalive") {
-            call.respond("Alive")
+            val wonderwallToken = this.context.getWonderwallAccessToken()
+            println(wonderwallToken)
+            call.respond("Alive" + "\n${wonderwallToken}")
         }
 
         get("/isready") {
@@ -45,6 +47,7 @@ fun Application.configureRouting() {
                 try {
                     requestData = call.receive()
                 } catch (e: Exception) {
+                    application.log.error(e.message, e)
                     when (e) {
                         is RequestAlreadyConsumedException,
                         is CannotTransformContentToTypeException -> {
@@ -55,8 +58,10 @@ fun Application.configureRouting() {
                     return@post
                 }
 
-                val digDirResponse = getContactInfo(requestData.personidenter,
-                                                    accessToken=tokenEndpointResponse.access_token)
+                val digDirResponse = getContactInfo(
+                    requestData.personidenter,
+                    accessToken = tokenEndpointResponse.access_token
+                )
                 // Add filter here
                 if (digDirResponse != null) {
                     val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
@@ -69,7 +74,7 @@ fun Application.configureRouting() {
         route("/auth") {
             authenticate {
                 get("/test") {
-                    call.request.headers.entries().forEach { println("${it.key} : ${it.value}") } 
+                    call.request.headers.entries().forEach { println("${it.key} : ${it.value}") }
                     call.respond("Authenticated")
                 }
             }
