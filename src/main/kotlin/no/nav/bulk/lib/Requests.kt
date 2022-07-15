@@ -26,6 +26,8 @@ suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): To
                         append("client_secret", AuthConfig.CLIENT_SECRET)
                         append("requested_token", "on_behalf_of")
                         append("assertion", assertion)
+                        append("subject_token", "")
+                        append("audience", "")
                     }
                 )
             )
