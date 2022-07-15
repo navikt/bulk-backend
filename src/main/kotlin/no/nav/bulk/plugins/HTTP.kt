@@ -28,6 +28,7 @@ fun Application.configureHTTP() {
 }
 
 fun Application.configureAuth() {
+    logger.info("Configuring auth")
     install(Authentication) {
         jwt {
             // provides a JWTVerifier that is used to verify a token format and signature
@@ -37,6 +38,7 @@ fun Application.configureAuth() {
             verifier(jwkProvider, AuthConfig.azureadConfig.issuer)
 
             validate { credentials: JWTCredential ->
+                logger.info("Try to verify token")
                 try {
                     requireNotNull(credentials.payload.audience) {
                         logger.error("Auth: Missing audience in token")
@@ -53,7 +55,6 @@ fun Application.configureAuth() {
         }
     }
 }
-
 
 fun buildJwkProvider(): JwkProvider {
     // https://github.com/nais/examples/blob/main/sec-blueprints/service-to-service/api-onbehalfof-ktor/src/main/kotlin/no/nav/security/examples/ProtectedOnBehalfOfApp.kt
