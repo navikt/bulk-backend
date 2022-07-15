@@ -15,7 +15,6 @@ object AuthConfig {
     const val SCOPE = "api://dev-gcp.team-rocket.digdir-krr-proxy/.default"
     val CLIENT_ID = (dotenv["AZURE_APP_CLIENT_ID"] ?: System.getenv("AZURE_APP_CLIENT_ID"))!!
     val CLIENT_SECRET = (dotenv["AZURE_APP_CLIENT_SECRET"] ?: System.getenv("AZURE_APP_CLIENT_SECRET"))!!
-    val AZURE_CONFIG_ENDPOINT = (dotenv["AZURE_APP_WELL_KNOWN_URL"] ?: System.getenv("AZURE_APP_WELL_KNOWN_URL"))!!
     val AZURE_APP_WELL_KNOWN_URL = (dotenv["AZURE_APP_WELL_KNOWN_URL"] ?: System.getenv("AZURE_APP_WELL_KNOWN_URL"))!!
     val azureadConfig: AzureAdOpenIdConfiguration = runBlocking {
         client.get(AZURE_APP_WELL_KNOWN_URL).body()
