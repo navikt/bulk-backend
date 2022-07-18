@@ -8,7 +8,7 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
 import no.nav.bulk.initializeHttpClient
-import no.nav.bulk.lib.getAccessToken
+import no.nav.bulk.lib.getAccessTokenOBO
 import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
@@ -118,7 +118,7 @@ class RequestsTest {
     fun testGetAccessToken() = testApplication {
         try {
             initializeHttpClient()
-            val tokenEndpointResponse = getAccessToken(assertion = "")
+            val tokenEndpointResponse = getAccessTokenOBO(assertion = "")
             if (tokenEndpointResponse != null) {
                 assertEquals(3599, tokenEndpointResponse.expires_in)
                 assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())

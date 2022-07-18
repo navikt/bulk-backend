@@ -8,13 +8,64 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.bulk.lib.filterAndMapDigDirResponse
-import no.nav.bulk.lib.getAccessToken
-import no.nav.bulk.lib.getContactInfo
+import io.ktor.util.pipeline.*
+import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
 
+suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>, env: String) {
+
+    // get authorization header
+    val context = pipelineContext.context
+    val call = pipelineContext.call
+
+    // request now token scoped to the downstream api resource
+    val tokenEndpointResponse =
+        if (env == "development") {
+            getAccessTokenClientCredentials(null)
+        } else {
+            val wonderWallccessToken = context.getWonderwallAccessToken()
+
+            // parse token
+            val jwt = JWT().decodeJwt(wonderWallccessToken)
+            val assertion = jwt.token
+            getAccessTokenOBO(null, assertion)
+        }
+
+    // return if invalid
+    if (tokenEndpointResponse == null) {
+        call.respond(HttpStatusCode.Unauthorized)
+        return@personerEndpointResponse
+    }
+    lateinit var requestData: PeopleDataRequest
+    try {
+        requestData = call.receive()
+    } catch (e: Exception) {
+        logger.error(e.message, e)
+        when (e) {
+            is RequestAlreadyConsumedException,
+            is CannotTransformContentToTypeException -> {
+                call.respond(HttpStatusCode.BadRequest)
+            }
+            else -> call.respond(HttpStatusCode.BadRequest) // Muligens endre?
+        }
+        return@personerEndpointResponse
+    }
+
+    val digDirResponse = getContactInfo(
+        requestData.personidenter,
+        accessToken = tokenEndpointResponse.access_token
+    )
+    // Add filter here
+    if (digDirResponse != null) {
+        val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
+        call.respond(filteredPeopleInfo)
+    } else
+        call.respond(HttpStatusCode.InternalServerError)
+}
+
 fun Application.configureRouting() {
+    val personerEndpointString = "/personer"
 
     routing {
         get("/isalive") {
@@ -27,48 +78,16 @@ fun Application.configureRouting() {
             call.respond("Ready")
         }
 
-        authenticate {
-            post("/personer") {
-                // get authorization header
-                val wonderWallccessToken = context.getWonderwallAccessToken()
-
-                // parse token
-                val jwt = JWT().decodeJwt(wonderWallccessToken)
-                val assertion = jwt.token
-
-                // request now token scoped to the downstream api resource
-                val tokenEndpointResponse = getAccessToken(null, assertion)
-
-                // return if invalid
-                if (tokenEndpointResponse == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
-                    return@post
+        // Authenticate user only in production
+        if (RunEnv.ENV == "development") {
+            post(personerEndpointString) {
+                personerEndpointResponse(this, RunEnv.ENV)
+            }
+        } else {
+            authenticate {
+                post(personerEndpointString) {
+                    personerEndpointResponse(this, RunEnv.ENV)
                 }
-                lateinit var requestData: PeopleDataRequest
-                try {
-                    requestData = call.receive()
-                } catch (e: Exception) {
-                    logger.error(e.message, e)
-                    when (e) {
-                        is RequestAlreadyConsumedException,
-                        is CannotTransformContentToTypeException -> {
-                            call.respond(HttpStatusCode.BadRequest)
-                        }
-                        else -> call.respond(HttpStatusCode.BadRequest) // Muligens endre?
-                    }
-                    return@post
-                }
-
-                val digDirResponse = getContactInfo(
-                    requestData.personidenter,
-                    accessToken = tokenEndpointResponse.access_token
-                )
-                // Add filter here
-                if (digDirResponse != null) {
-                    val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
-                    call.respond(filteredPeopleInfo)
-                } else
-                    call.respond(HttpStatusCode.InternalServerError)
             }
         }
 

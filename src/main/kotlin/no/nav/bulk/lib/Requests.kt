@@ -12,7 +12,7 @@ import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.TokenEndpointResponse
 import java.util.*
 
-suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): TokenEndpointResponse? {
+suspend fun getAccessTokenOBO(clientArg: HttpClient? = null, assertion: String): TokenEndpointResponse? {
     val localClient = clientArg ?: client
 
     val response = try {
@@ -38,9 +38,33 @@ suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): To
     return response.body()
 }
 
-suspend fun getContactInfo(personnr: List<String>,
-                           clientArg: HttpClient? = null,
-                           accessToken: String): DigDirResponse? {
+suspend fun getAccessTokenClientCredentials(clientArg: HttpClient? = null): TokenEndpointResponse? {
+    val localClient = clientArg ?: client
+
+    val response = try {
+        localClient.post(Endpoints.TOKEN_ENDPOINT) {
+            setBody(
+                MultiPartFormDataContent(
+                    formData {
+                        append("grant_type", "client_credentials")
+                        append("scope", AuthConfig.SCOPE)
+                        append("client_id", AuthConfig.CLIENT_ID)
+                        append("client_secret", AuthConfig.CLIENT_SECRET)
+                    }
+                )
+            )
+        }
+    } catch (e: ClientRequestException) {
+        return null
+    }
+    return response.body()
+}
+
+suspend fun getContactInfo(
+    personnr: List<String>,
+    clientArg: HttpClient? = null,
+    accessToken: String
+): DigDirResponse? {
     val localClient = clientArg ?: client
     val res = try {
         localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
