@@ -9,9 +9,9 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.defaultheaders.*
 import no.nav.bulk.lib.AuthConfig
+import no.nav.bulk.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import no.nav.bulk.logger
 
 fun Application.configureHTTP() {
     install(CORS) {
@@ -46,10 +46,10 @@ fun Application.configureAuth() {
                     require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
                         logger.error( "Auth: Valid audience not found in claims")
                     }
-                    JWTPrincipal(credentials.payload)
+                    return@validate JWTPrincipal(credentials.payload)
                 } catch (e: Throwable) {
                     logger.error("Auth: Error validating token", e)
-                    null
+                    return@validate null
                 }
             }
         }
@@ -58,7 +58,7 @@ fun Application.configureAuth() {
 
 fun buildJwkProvider(): JwkProvider {
     // https://github.com/nais/examples/blob/main/sec-blueprints/service-to-service/api-onbehalfof-ktor/src/main/kotlin/no/nav/security/examples/ProtectedOnBehalfOfApp.kt
-    return JwkProviderBuilder(URL(AuthConfig.AZURE_APP_WELL_KNOWN_URL))
+    return JwkProviderBuilder(URL(AuthConfig.azureadConfig.jwksUri))
         .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
         .rateLimited(
             10,

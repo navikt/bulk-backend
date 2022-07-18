@@ -17,10 +17,12 @@ import no.nav.bulk.models.PeopleDataRequest
 fun Application.configureRouting() {
 
     routing {
-        get("/isalive") {
-            val wonderwallToken = this.context.getWonderwallAccessToken()
-            logger.info("Authorization: Bearer $wonderwallToken")
-            call.respond("Alive" + "\n${wonderwallToken}")
+        authenticate {
+            get("/isalive") {
+                val wonderwallToken = this.context.getWonderwallAccessToken()
+                logger.info("Authorization: Bearer $wonderwallToken")
+                call.respond("Alive" + "\n${wonderwallToken}")
+            }
         }
 
         get("/isready") {
