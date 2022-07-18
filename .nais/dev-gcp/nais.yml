@@ -33,6 +33,9 @@ spec:
     application:
       enabled: true
       tenant: trygdeetaten.no
+  env:
+    - name: FRONTEND_CLIENT_ID
+      value: 6117bfb9-e769-4d9f-a3e0-1e117fee6d6b
 
   ingresses:
     - https://bulk-backend.dev.intern.nav.no

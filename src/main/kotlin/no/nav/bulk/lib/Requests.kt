@@ -40,9 +40,12 @@ suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): To
     return response.body()
 }
 
-suspend fun getAccessTokenOBO(token: String): String {
-    val tokenClient: AzureAdOnBehalfOfTokenClient = AzureAdTokenClientBuilder.builder()
-        .withNaisDefaults()
+fun getAccessTokenOBO(token: String): String {
+    val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
+    val tokenClient: AzureAdOnBehalfOfTokenClient = builder
+        .withClientId(AuthConfig.CLIENT_ID)
+        .withPrivateJwk(AuthConfig.CLIENT_JWK)
+        .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
         .buildOnBehalfOfTokenClient()
 
     return tokenClient.exchangeOnBehalfOfToken(AuthConfig.SCOPE, token)

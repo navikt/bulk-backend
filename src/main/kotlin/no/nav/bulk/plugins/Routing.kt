@@ -1,6 +1,9 @@
 package no.nav.bulk.plugins
 
 import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.DecodedJWT
+import com.auth0.jwt.interfaces.RSAKeyProvider
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -8,9 +11,7 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import no.nav.bulk.lib.filterAndMapDigDirResponse
-import no.nav.bulk.lib.getAccessToken
-import no.nav.bulk.lib.getContactInfo
+import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
 
@@ -33,16 +34,20 @@ fun Application.configureRouting() {
             post("/personer") {
                 // get authorization header
                 val wonderWallccessToken = context.getWonderwallAccessToken()
-
+                val tokenWithoutBearer = wonderWallccessToken.split(" ")[1]
                 // parse token
-                val jwt = JWT().decodeJwt(wonderWallccessToken)
-                val assertion = jwt.token
+                val jwtDecodedTokenPreviousAud: DecodedJWT = JWT.decode(tokenWithoutBearer)
+
+                val test = generateJwt(jwtDecodedTokenPreviousAud)
+
+                val assertion = jwtDecodedTokenPreviousAud.token
+
 
                 // request now token scoped to the downstream api resource
-                val tokenEndpointResponse = getAccessToken(null, assertion)
+                val tokenEndpointResponse = getAccessTokenOBO(assertion)
 
                 // return if invalid
-                if (tokenEndpointResponse == null) {
+                if (tokenEndpointResponse == "") {
                     call.respond(HttpStatusCode.Unauthorized)
                     return@post
                 }
@@ -63,7 +68,7 @@ fun Application.configureRouting() {
 
                 val digDirResponse = getContactInfo(
                     requestData.personidenter,
-                    accessToken = tokenEndpointResponse.access_token
+                    accessToken = tokenEndpointResponse
                 )
                 // Add filter here
                 if (digDirResponse != null) {
