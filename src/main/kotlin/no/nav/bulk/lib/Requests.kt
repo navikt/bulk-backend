@@ -10,6 +10,8 @@ import no.nav.bulk.client
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.TokenEndpointResponse
+import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
+import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
 import java.util.*
 
 suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): TokenEndpointResponse? {
@@ -36,6 +38,14 @@ suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): To
         return null
     }
     return response.body()
+}
+
+suspend fun getAccessTokenOBO(token: String): String {
+    val tokenClient: AzureAdOnBehalfOfTokenClient = AzureAdTokenClientBuilder.builder()
+        .withNaisDefaults()
+        .buildOnBehalfOfTokenClient()
+
+    return tokenClient.exchangeOnBehalfOfToken(AuthConfig.SCOPE, token)
 }
 
 suspend fun getContactInfo(personnr: List<String>,
