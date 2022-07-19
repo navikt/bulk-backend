@@ -14,32 +14,6 @@ import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
 import java.util.*
 
-suspend fun getAccessToken(clientArg: HttpClient? = null, assertion: String): TokenEndpointResponse? {
-    val localClient = clientArg ?: client
-
-    val response = try {
-        localClient.post(Endpoints.TOKEN_ENDPOINT) {
-            setBody(
-                MultiPartFormDataContent(
-                    formData {
-                        append("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
-                        append("scope", AuthConfig.SCOPE)
-                        append("client_id", AuthConfig.CLIENT_ID)
-                        append("client_secret", AuthConfig.CLIENT_SECRET)
-                        append("requested_token", "on_behalf_of")
-                        append("assertion", assertion)
-                        append("subject_token", "")
-                        append("audience", "")
-                    }
-                )
-            )
-        }
-    } catch (e: ClientRequestException) {
-        return null
-    }
-    return response.body()
-}
-
 fun getAccessTokenOBO(token: String): String {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
     val tokenClient: AzureAdOnBehalfOfTokenClient = builder
