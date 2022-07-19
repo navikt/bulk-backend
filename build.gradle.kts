@@ -87,11 +87,16 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.3")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
+
+    implementation("net.logstash.logback:logstash-logback-encoder:7.2")
+
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
     implementation("io.github.cdimascio:dotenv-kotlin:6.3.1")
+    // https://mavenlibs.com/maven/dependency/no.nav.common/token-client
+    implementation("no.nav.common:token-client:2.2022.07.01_07.12-6a0864fa6938")
 
     implementation("io.ktor:ktor-server-call-logging:$ktor_version")
     implementation("io.ktor:ktor-server-auth:$ktor_version")

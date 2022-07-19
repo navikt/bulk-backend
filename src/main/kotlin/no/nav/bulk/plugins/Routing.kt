@@ -1,6 +1,5 @@
 package no.nav.bulk.plugins
 
-import com.auth0.jwt.JWT
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -18,9 +17,7 @@ fun Application.configureRouting() {
 
     routing {
         get("/isalive") {
-            val wonderwallToken = this.context.getWonderwallAccessToken()
-            logger.info("Authorization: Bearer $wonderwallToken")
-            call.respond("Alive" + "\n${wonderwallToken}")
+            call.respond("Alive")
         }
 
         get("/isready") {
@@ -29,21 +26,15 @@ fun Application.configureRouting() {
 
         authenticate {
             post("/personer") {
-                // get authorization header
-                val wonderWallccessToken = context.getWonderwallAccessToken()
-
-                // parse token
-                val jwt = JWT().decodeJwt(wonderWallccessToken)
-                val assertion = jwt.token
-
-                // request now token scoped to the downstream api resource
-                val tokenEndpointResponse = getAccessToken(null, assertion)
+                // initate client credentials grant
+                val tokenEndpointResponse = getAccessToken()
 
                 // return if invalid
                 if (tokenEndpointResponse == null) {
                     call.respond(HttpStatusCode.Unauthorized)
                     return@post
                 }
+
                 lateinit var requestData: PeopleDataRequest
                 try {
                     requestData = call.receive()
@@ -61,7 +52,7 @@ fun Application.configureRouting() {
 
                 val digDirResponse = getContactInfo(
                     requestData.personidenter,
-                    accessToken = tokenEndpointResponse.access_token
+                    accessToken = tokenEndpointResponse
                 )
                 // Add filter here
                 if (digDirResponse != null) {
@@ -82,6 +73,3 @@ fun Application.configureRouting() {
         }
     }
 }
-
-
-fun ApplicationCall.getWonderwallAccessToken(): String = request.parseAuthorizationHeader().toString()

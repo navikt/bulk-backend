@@ -13,11 +13,6 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-env:
-  AZURE_APP_CLIENT_ID: '${{ secrets.AZURE_APP_CLIENT_ID }}'
-  AZURE_APP_CLIENT_SECRET: '${{ secrets.AZURE_APP_CLIENT_SECRET }}'
-  AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: '${{ secrets.AZURE_APP_CLIENT_SECRET }}'
-
 jobs:
   set_version:
     name: set image name
