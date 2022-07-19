@@ -47,7 +47,7 @@ fun Application.configureRouting() {
                 val tokenEndpointResponse = getAccessTokenOBO(assertion)
 
                 // return if invalid
-                if (tokenEndpointResponse == "") {
+                if (tokenEndpointResponse == null) {
                     call.respond(HttpStatusCode.Unauthorized)
                     return@post
                 }
