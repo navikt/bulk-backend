@@ -6,12 +6,14 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.defaultheaders.*
+import io.ktor.server.plugins.partialcontent.*
 import no.nav.bulk.lib.AuthConfig
+import no.nav.bulk.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
-import no.nav.bulk.logger
 
 fun Application.configureHTTP() {
     install(CORS) {
@@ -25,6 +27,8 @@ fun Application.configureHTTP() {
     install(DefaultHeaders) {
         header("X-Engine", "Ktor") // will send this header with each response
     }
+    install(PartialContent)
+    install(AutoHeadResponse)
 }
 
 fun Application.configureAuth() {
@@ -44,7 +48,7 @@ fun Application.configureAuth() {
                         logger.error("Auth: Missing audience in token")
                     }
                     require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
-                        logger.error( "Auth: Valid audience not found in claims")
+                        logger.error("Auth: Valid audience not found in claims")
                     }
                     JWTPrincipal(credentials.payload)
                 } catch (e: Throwable) {
