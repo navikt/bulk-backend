@@ -40,6 +40,7 @@ fun Application.configureAuth() {
             validate { credentials: JWTCredential ->
                 logger.info("Try to verify token")
                 try {
+                    // TODO: Add validation for groups claim
                     // token has a subject claim
                     requireNotNull(credentials.payload.subject) {
                         logger.error("Auth: Missing subject in token")
