@@ -1,5 +1,6 @@
 package no.nav.bulk.integrationtests
 
+import com.auth0.jwt.JWT
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -7,12 +8,16 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
+import io.ktor.server.util.*
+import io.ktor.util.*
 import no.nav.bulk.initializeHttpClient
-import no.nav.bulk.lib.getAccessTokenOBO
+import no.nav.bulk.lib.AuthConfig
+import no.nav.bulk.lib.getAccessToken
 import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -71,7 +76,8 @@ class RequestsTest {
                 "1234",
                 "11111100000"
             )
-            val response = getContactInfo(testPersonidenter, accessToken = "")
+            val accessToken = getAccessToken() ?: ""
+            val response = getContactInfo(testPersonidenter, accessToken = accessToken)
 
             if (response != null) {
                 assertEquals(2, response.feil.size)
@@ -99,7 +105,8 @@ class RequestsTest {
                 "07506535861",
                 "07428827184",
             )
-            val response = getContactInfo(testPersonidenter, accessToken = "")
+            val accessToken = getAccessToken() ?: ""
+            val response = getContactInfo(testPersonidenter, accessToken = accessToken)
 
             if (response != null) {
                 assertEquals(true, response.personer.isNotEmpty())
@@ -114,16 +121,22 @@ class RequestsTest {
         }
     }
 
+    @OptIn(InternalAPI::class)
     @Test
     fun testGetAccessToken() = testApplication {
         try {
             initializeHttpClient()
-            val tokenEndpointResponse = getAccessTokenOBO(assertion = "")
-            if (tokenEndpointResponse != null) {
-                assertEquals(3599, tokenEndpointResponse.expires_in)
-                assertEquals(true, tokenEndpointResponse.access_token.isNotEmpty())
-                assertEquals("Bearer", tokenEndpointResponse.token_type)
-            }
+            val time = LocalDateTime.now()
+            val tokenEndpointResponse = getAccessToken()
+            assertTrue(tokenEndpointResponse != null, "Token is not null")
+
+            val decodedJwt = JWT.decode(tokenEndpointResponse)
+
+            assertEquals("RS256", decodedJwt.algorithm)
+            assertEquals(AuthConfig.azureADConfig.issuer, decodedJwt.issuer)
+            assertEquals("\"${AuthConfig.CLIENT_ID}\"", decodedJwt.getClaim("azp").toString())
+            assertTrue(time.isBefore(decodedJwt.expiresAt.toLocalDateTime()))
+            assertTrue(decodedJwt.issuedAt.before(decodedJwt.expiresAt))
         } catch (e: Exception) {
             println(e.stackTrace)
             throw e
