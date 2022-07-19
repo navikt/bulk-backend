@@ -4,25 +4,23 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import no.nav.bulk.client
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
-import no.nav.bulk.models.TokenEndpointResponse
 import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
-import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
+import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
 import java.util.*
 
-fun getAccessTokenOBO(token: String): String {
+fun getAccessToken(): String? {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
-    val tokenClient: AzureAdOnBehalfOfTokenClient = builder
+    val tokenClient: AzureAdMachineToMachineTokenClient = builder
         .withClientId(AuthConfig.CLIENT_ID)
         .withPrivateJwk(AuthConfig.CLIENT_JWK)
         .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
-        .buildOnBehalfOfTokenClient()
+        .buildMachineToMachineTokenClient()
 
-    return tokenClient.exchangeOnBehalfOfToken(AuthConfig.SCOPE, token)
+    return tokenClient.createMachineToMachineToken(AuthConfig.SCOPE)
 }
 
 suspend fun getContactInfo(personnr: List<String>,
@@ -39,6 +37,7 @@ suspend fun getContactInfo(personnr: List<String>,
             setBody(DigDirRequest(personnr))
         }
     } catch (e: ClientRequestException) {
+        println("Error discoveded $e")
         return null
     }
     return res.body()
