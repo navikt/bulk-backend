@@ -11,6 +11,10 @@ val dotenv = dotenv {
     ignoreIfMissing = true
 }
 
+object RunEnv {
+    val ENV = dotenv["ENVIRONMENT"] ?: "production"
+}
+
 object AuthConfig {
     const val SCOPE = "api://dev-gcp.team-rocket.digdir-krr-proxy/.default"
     val CLIENT_ID: String = dotenv["AZURE_APP_CLIENT_ID"]

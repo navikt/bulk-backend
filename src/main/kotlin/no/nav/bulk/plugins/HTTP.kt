@@ -6,8 +6,10 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.defaultheaders.*
+import io.ktor.server.plugins.partialcontent.*
 import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.logger
 import java.net.URL
@@ -25,6 +27,8 @@ fun Application.configureHTTP() {
     install(DefaultHeaders) {
         header("X-Engine", "Ktor") // will send this header with each response
     }
+    install(PartialContent)
+    install(AutoHeadResponse)
 }
 
 fun Application.configureAuth() {
@@ -39,6 +43,7 @@ fun Application.configureAuth() {
 
             validate { credentials: JWTCredential ->
                 logger.info("Try to verify token")
+                // TODO: do we need to do a request to azure ad to verify that the user is a member of the group?
                 try {
                     // token has a subject claim
                     requireNotNull(credentials.payload.subject) {

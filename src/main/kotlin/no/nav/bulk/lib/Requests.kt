@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.serialization.SerializationException
 import no.nav.bulk.client
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
@@ -23,9 +24,11 @@ fun getAccessToken(): String? {
     return tokenClient.createMachineToMachineToken(AuthConfig.SCOPE)
 }
 
-suspend fun getContactInfo(personnr: List<String>,
-                           clientArg: HttpClient? = null,
-                           accessToken: String): DigDirResponse? {
+suspend fun getContactInfo(
+    personnr: List<String>,
+    clientArg: HttpClient? = null,
+    accessToken: String
+): DigDirResponse? {
     val localClient = clientArg ?: client
     val res = try {
         localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
@@ -36,9 +39,13 @@ suspend fun getContactInfo(personnr: List<String>,
             contentType(ContentType.Application.Json)
             setBody(DigDirRequest(personnr))
         }
-    } catch (e: ClientRequestException) {
-        println("Error discoveded $e")
-        return null
+    } catch (e: Exception) {
+        return when (e) {
+            is ClientRequestException,
+            is ServerResponseException,
+            is SerializationException -> null
+            else -> throw e
+        }
     }
     return res.body()
 }
