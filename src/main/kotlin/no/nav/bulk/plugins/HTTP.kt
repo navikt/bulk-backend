@@ -43,6 +43,7 @@ fun Application.configureAuth() {
 
             validate { credentials: JWTCredential ->
                 logger.info("Try to verify token")
+                // TODO: do we need to do a request to azure ad to verify that the user is a member of the group?
                 try {
                     // token has a subject claim
                     requireNotNull(credentials.payload.subject) {

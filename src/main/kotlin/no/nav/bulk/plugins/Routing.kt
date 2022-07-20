@@ -23,6 +23,7 @@ enum class ResponseFormat {
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
     val requestData: PeopleDataRequest = call.receive()
+    // TODO: log the requested data, who requested the data, etc. 
     val responseFormat =
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
     val accessToken = getAccessToken() ?: return call.respond(HttpStatusCode.Unauthorized)
