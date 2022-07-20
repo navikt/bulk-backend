@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.serialization.SerializationException
 import no.nav.bulk.client
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
@@ -38,9 +39,13 @@ suspend fun getContactInfo(
             contentType(ContentType.Application.Json)
             setBody(DigDirRequest(personnr))
         }
-    } catch (e: ClientRequestException) {
-        println("Error discoveded $e")
-        return null
+    } catch (e: Exception) {
+        return when (e) {
+            is ClientRequestException,
+            is ServerResponseException,
+            is SerializationException -> null
+            else -> throw e
+        }
     }
     return res.body()
 }
