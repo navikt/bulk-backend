@@ -11,6 +11,8 @@ import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.defaultheaders.*
 import io.ktor.server.plugins.partialcontent.*
 import no.nav.bulk.lib.AuthConfig
+import no.nav.bulk.lib.RunEnv
+import no.nav.bulk.lib.isDevelopment
 import no.nav.bulk.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -32,6 +34,8 @@ fun Application.configureHTTP() {
 }
 
 fun Application.configureAuth() {
+    if (RunEnv.isDevelopment()) return
+
     logger.info("Configuring auth")
     install(Authentication) {
         jwt {

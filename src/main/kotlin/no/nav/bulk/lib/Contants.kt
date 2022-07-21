@@ -15,6 +15,9 @@ object RunEnv {
     val ENV = dotenv["ENVIRONMENT"] ?: "production"
 }
 
+fun RunEnv.isDevelopment() = ENV == "development"
+fun RunEnv.isProduction() = ENV == "production"
+
 object AuthConfig {
     const val SCOPE = "api://dev-gcp.team-rocket.digdir-krr-proxy/.default"
     val CLIENT_ID: String = dotenv["AZURE_APP_CLIENT_ID"]

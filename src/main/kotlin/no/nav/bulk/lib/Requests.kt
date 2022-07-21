@@ -47,5 +47,8 @@ suspend fun getContactInfo(
             else -> throw e
         }
     }
-    return res.body()
+
+    return if (res.status.isSuccess())
+        res.body()
+    else null
 }

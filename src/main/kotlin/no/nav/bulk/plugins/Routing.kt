@@ -12,7 +12,9 @@ import no.nav.bulk.lib.RunEnv
 import no.nav.bulk.lib.filterAndMapDigDirResponse
 import no.nav.bulk.lib.getAccessToken
 import no.nav.bulk.lib.getContactInfo
+import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.PeopleDataRequest
+import java.lang.Integer.min
 
 
 enum class ResponseFormat {
@@ -28,12 +30,19 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
     val accessToken = getAccessToken() ?: return call.respond(HttpStatusCode.Unauthorized)
 
-    val digDirResponse = getContactInfo(
-        requestData.personidenter,
-        accessToken = accessToken
-    ) ?: return call.respond(HttpStatusCode.InternalServerError)
+    val digDirResponseTotal = DigDirResponse(mutableMapOf(), mutableMapOf())
 
-    val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
+    for (i in 0 until requestData.personidenter.size step 500) {
+        val end = min(i + 500, requestData.personidenter.size)
+        val digDirResponse = getContactInfo(
+            requestData.personidenter.slice(i until end),
+            accessToken = accessToken
+        ) ?: return call.respond(HttpStatusCode.InternalServerError)
+        (digDirResponseTotal.personer as MutableMap).putAll(digDirResponse.personer)
+        (digDirResponseTotal.feil as MutableMap).putAll(digDirResponse.feil)
+    }
+
+    val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponseTotal)
     if (responseFormat == ResponseFormat.CSV) {
         val peopleCSV = mapToCSV(filteredPeopleInfo)
         call.respondText(peopleCSV)

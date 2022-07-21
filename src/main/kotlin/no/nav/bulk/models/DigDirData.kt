@@ -51,6 +51,9 @@ enum class DigDirFeil(val value: String) {
 @kotlinx.serialization.Serializable
 data class DigDirResponse(val personer: Map<String, DigDirPerson>, val feil: Map<String, DigDirFeil>)
 
+fun DigDirResponse.merge(digirResponse: DigDirResponse): Unit {
+}
+
 @kotlinx.serialization.Serializable
 data class SikkerDigitalPostkasse(
     val adresse: String? = null,
