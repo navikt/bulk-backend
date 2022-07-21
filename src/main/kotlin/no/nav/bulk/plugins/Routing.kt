@@ -12,6 +12,7 @@ import no.nav.bulk.lib.RunEnv
 import no.nav.bulk.lib.filterAndMapDigDirResponse
 import no.nav.bulk.lib.getAccessToken
 import no.nav.bulk.lib.getContactInfo
+import no.nav.bulk.logger
 import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.PeopleDataRequest
 import java.lang.Integer.min
@@ -25,6 +26,7 @@ enum class ResponseFormat {
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
     val requestData: PeopleDataRequest = call.receive()
+    logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
     // TODO: log the requested data, who requested the data, etc. 
     val responseFormat =
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
@@ -38,6 +40,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
             requestData.personidenter.slice(i until end),
             accessToken = accessToken
         ) ?: return call.respond(HttpStatusCode.InternalServerError)
+        logger.info("step: $i")
         (digDirResponseTotal.personer as MutableMap).putAll(digDirResponse.personer)
         (digDirResponseTotal.feil as MutableMap).putAll(digDirResponse.feil)
     }
