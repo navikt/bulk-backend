@@ -26,6 +26,7 @@ enum class ResponseFormat {
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
     val requestData: PeopleDataRequest = call.receive()
+    // TODO: remove log
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
     // TODO: log the requested data, who requested the data, etc. 
     val responseFormat =
@@ -40,7 +41,6 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
             requestData.personidenter.slice(i until end),
             accessToken = accessToken
         ) ?: return call.respond(HttpStatusCode.InternalServerError)
-        logger.info("step: $i")
         (digDirResponseTotal.personer as MutableMap).putAll(digDirResponse.personer)
         (digDirResponseTotal.feil as MutableMap).putAll(digDirResponse.feil)
     }
@@ -73,6 +73,7 @@ fun Application.configureRouting() {
         } else {
             authenticate {
                 post(personerEndpointString) {
+                    logger.info("Inside request for personer")
                     personerEndpointResponse(this)
                 }
             }
