@@ -21,10 +21,12 @@ spec:
     initialDelay: 30
     path: isalive
     timeout: 10
+    failureThreshold: 30
   readiness:
     initialDelay: 30
     path: isready
     timeout: 10
+    failureThreshold: 30
   replicas:
     max: 1
     min: 1
