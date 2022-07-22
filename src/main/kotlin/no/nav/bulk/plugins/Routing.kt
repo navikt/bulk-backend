@@ -44,7 +44,8 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         (digDirResponseTotal.personer as MutableMap).putAll(digDirResponse.personer)
         (digDirResponseTotal.feil as MutableMap).putAll(digDirResponse.feil)
     }
-
+    // At this stage, all the communication with DigDir is done
+    logger.info("Size of personer map: ${digDirResponseTotal.personer.size}")
     val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponseTotal)
     if (responseFormat == ResponseFormat.CSV) {
         val peopleCSV = mapToCSV(filteredPeopleInfo)
