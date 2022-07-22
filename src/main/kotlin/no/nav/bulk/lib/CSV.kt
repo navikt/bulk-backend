@@ -6,6 +6,7 @@ fun mapToCSV(peopleData: PeopleDataResponse): String {
     var result = "Personident,Språk,E-post,Mobilnummer,Adresse,Feil"
     logger.info("Mapping people request to CSV file (string)")
     logger.info("Time start mapping to CSV: ${LocalDateTime.now()}")
+    // With 200k pnrs, this processing can take 7 minutes!!!
     peopleData.personer.forEach { (personident, personData) ->
         result += "\n$personident," +
                 (personData.person?.spraak ?: "") + "," +
