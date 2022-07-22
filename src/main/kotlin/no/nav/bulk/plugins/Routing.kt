@@ -16,6 +16,7 @@ import no.nav.bulk.logger
 import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.PeopleDataRequest
 import java.lang.Integer.min
+import java.time.LocalDateTime
 
 
 enum class ResponseFormat {
@@ -35,6 +36,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 
     val digDirResponseTotal = DigDirResponse(mutableMapOf(), mutableMapOf())
 
+    logger.info("Start batch request: ${LocalDateTime.now()}")
     for (i in 0 until requestData.personidenter.size step 500) {
         val end = min(i + 500, requestData.personidenter.size)
         val digDirResponse = getContactInfo(
@@ -44,14 +46,17 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         (digDirResponseTotal.personer as MutableMap).putAll(digDirResponse.personer)
         (digDirResponseTotal.feil as MutableMap).putAll(digDirResponse.feil)
     }
+    logger.info("Finished batch request: ${LocalDateTime.now()}")
     // At this stage, all the communication with DigDir is done
     logger.info("Size of personer map: ${digDirResponseTotal.personer.size}")
+
+    logger.info("Start filter and map: ${LocalDateTime.now()}")
     val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponseTotal)
     if (responseFormat == ResponseFormat.CSV) {
         val peopleCSV = mapToCSV(filteredPeopleInfo)
         call.respondText(peopleCSV)
     } else call.respond(filteredPeopleInfo)
-
+    logger.info("Finished filter and map: ${LocalDateTime.now()}")
 }
 
 fun Application.configureRouting() {
