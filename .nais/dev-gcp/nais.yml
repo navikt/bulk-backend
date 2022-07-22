@@ -20,9 +20,11 @@ spec:
   liveness:
     initialDelay: 30
     path: isalive
+    timeout: 300
   readiness:
     initialDelay: 30
     path: isready
+    timeout: 300
   replicas:
     max: 1
     min: 1
