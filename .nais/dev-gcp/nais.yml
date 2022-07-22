@@ -35,7 +35,7 @@ spec:
       tenant: trygdeetaten.no
   env:
     - name: FRONTEND_CLIENT_ID
-      value: 6117bfb9-e769-4d9f-a3e0-
+      value: 6117bfb9-e769-4d9f-a3e0-1e117fee6d6b
   resources:
     limits:
       memory: "1024Mi"
