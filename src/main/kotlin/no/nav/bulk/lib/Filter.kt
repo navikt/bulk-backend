@@ -75,8 +75,7 @@ fun filterAndMapDigDirResponse(digDirResponse: DigDirResponse): PeopleDataRespon
     val peopleResponseMap = mutableMapOf<String, PersonData>()
 
     for ((personident, personInfo) in digDirResponse.personer) {
-        val result = validateDigDirPersonInfo(personInfo)
-        when (result) {
+        when (val result = validateDigDirPersonInfo(personInfo)) {
             is DigDirPersonValidationResult.Fail -> peopleResponseMap[personident] = PersonData(null, result.feilType)
             is DigDirPersonValidationResult.Success -> peopleResponseMap[personident] =
                 mapToPersonData(personInfo, result.caveat)
