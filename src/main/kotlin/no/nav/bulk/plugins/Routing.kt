@@ -27,7 +27,13 @@ enum class ResponseFormat {
  */
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
-    val requestData: PeopleDataRequest = call.receive()
+    val requestData: PeopleDataRequest
+    try {
+        requestData = call.receive()
+    } catch (e: CannotTransformContentToTypeException) {
+        return call.respond(HttpStatusCode.BadRequest)
+    }
+
     // TODO: remove log
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
     // TODO: log the requested data, who requested the data, etc. 
