@@ -7,14 +7,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import mapToCSV
-import no.nav.bulk.lib.RunEnv
-import no.nav.bulk.lib.filterAndMapDigDirResponse
-import no.nav.bulk.lib.getAccessToken
-import no.nav.bulk.lib.getContactInfo
+import no.nav.bulk.lib.*
 import no.nav.bulk.logger
-import no.nav.bulk.models.DigDirResponse
 import no.nav.bulk.models.PeopleDataRequest
+import no.nav.bulk.models.PeopleDataResponse
 import java.lang.Integer.min
 import java.time.LocalDateTime
 
@@ -24,6 +20,11 @@ enum class ResponseFormat {
     CSV
 }
 
+/**
+ * This method executes the requests to the DigDir-KRR endpoint, via the getContactinfo-method.
+ * Splits the requests into batches of 500 (max limit) until the whole list of pnrs is done.
+ * Maps the response into PeopleDataResponse and creates the CSV file, that is used in the response to the call.
+ */
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
     val requestData: PeopleDataRequest = call.receive()
@@ -34,7 +35,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
     val accessToken = getAccessToken() ?: return call.respond(HttpStatusCode.Unauthorized)
 
-    val digDirResponseTotal = DigDirResponse(mutableMapOf(), mutableMapOf())
+    val peopleDataResponseTotal = PeopleDataResponse(mutableMapOf())
 
     logger.info("Start batch request: ${LocalDateTime.now()}")
     for (i in 0 until requestData.personidenter.size step 500) {
@@ -43,20 +44,17 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
             requestData.personidenter.slice(i until end),
             accessToken = accessToken
         ) ?: return call.respond(HttpStatusCode.InternalServerError)
-        (digDirResponseTotal.personer as MutableMap).putAll(digDirResponse.personer)
-        (digDirResponseTotal.feil as MutableMap).putAll(digDirResponse.feil)
+        val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
+        (peopleDataResponseTotal.personer as MutableMap).putAll(filteredPeopleInfo.personer)
     }
     logger.info("Finished batch request: ${LocalDateTime.now()}")
     // At this stage, all the communication with DigDir is done
-    logger.info("Size of personer map: ${digDirResponseTotal.personer.size}")
+    logger.info("Size of personer map: ${peopleDataResponseTotal.personer.size}")
 
-    logger.info("Start filter and map: ${LocalDateTime.now()}")
-    val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponseTotal)
     if (responseFormat == ResponseFormat.CSV) {
-        val peopleCSV = mapToCSV(filteredPeopleInfo)
+        val peopleCSV = mapToCSV(peopleDataResponseTotal)
         call.respondText(peopleCSV)
-    } else call.respond(filteredPeopleInfo)
-    logger.info("Finished filter and map: ${LocalDateTime.now()}")
+    } else call.respond(peopleDataResponseTotal)
 }
 
 fun Application.configureRouting() {
