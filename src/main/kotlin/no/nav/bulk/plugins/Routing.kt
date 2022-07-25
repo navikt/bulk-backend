@@ -14,6 +14,7 @@ import no.nav.bulk.models.PeopleDataRequest
 import no.nav.bulk.models.PeopleDataResponse
 import java.lang.Integer.min
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 
 enum class ResponseFormat {
@@ -29,11 +30,15 @@ enum class ResponseFormat {
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
     val requestData: PeopleDataRequest
+    logger.info("Deserialize request data")
+    val start1 = LocalDateTime.now()
     try {
         requestData = call.receive()
     } catch (e: CannotTransformContentToTypeException) {
         return call.respond(HttpStatusCode.BadRequest)
     }
+    val end1 = LocalDateTime.now()
+    logger.info("Time Deserialize request data: ${start1.until(end1, ChronoUnit.MILLIS)}ms")
 
     // TODO: remove log
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
@@ -44,7 +49,8 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 
     val peopleDataResponseTotal = PeopleDataResponse(mutableMapOf())
 
-    logger.info("Start batch request: ${LocalDateTime.now()}")
+    logger.info("Start batch request")
+    val start2 = LocalDateTime.now()
     for (i in 0 until requestData.personidenter.size step 500) {
         val end = min(i + 500, requestData.personidenter.size)
         val digDirResponse = getContactInfo(
@@ -54,12 +60,17 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
         (peopleDataResponseTotal.personer as MutableMap).putAll(filteredPeopleInfo.personer)
     }
-    logger.info("Finished batch request: ${LocalDateTime.now()}")
+    val end2 = LocalDateTime.now()
+    logger.info("Time batch request: ${start2.until(end2, ChronoUnit.SECONDS)}s")
+
     // At this stage, all the communication with DigDir is done
     logger.info("Size of personer map: ${peopleDataResponseTotal.personer.size}")
 
     if (responseFormat == ResponseFormat.CSV) {
+        val start3 = LocalDateTime.now()
         val peopleCSV = mapToCSV(peopleDataResponseTotal)
+        val end3 = LocalDateTime.now()
+        logger.info("Time mapping to CSV: ${start3.until(end3, ChronoUnit.MILLIS)}ms")
         call.respondText(peopleCSV)
     } else call.respond(peopleDataResponseTotal)
 }
