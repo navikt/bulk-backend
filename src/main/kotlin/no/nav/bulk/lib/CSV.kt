@@ -22,16 +22,4 @@ fun mapToCSV(peopleData: PeopleDataResponse): String {
     }.joinToString(separator = "\n").also {
         it.replace("/^/","Personident,Språk,E-post,Mobilnummer,Adresse,Feil\n")
     }
-    //    val result = StringBuilder()
-    //    result.append("Personident,Språk,E-post,Mobilnummer,Adresse,Feil")
-    //    // With 200k pnrs, this processing can take 7 minutes!!!
-    //    peopleData.personer.forEach { (personident, personData) ->
-    //        result.append("\n$personident," +
-    //                (personData.person?.spraak ?: "") + "," +
-    //                (personData.person?.epostadresse ?: "") + "," +
-    //                (personData.person?.mobiltelefonnummer ?: "") + "," +
-    //                (personData.person?.adresse ?: "") + "," +
-    //                (personData.feil ?: ""))
-    //    }
-    //    return result.toString()
 }

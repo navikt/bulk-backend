@@ -47,8 +47,6 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
     val accessToken = getAccessToken() ?: return call.respond(HttpStatusCode.Unauthorized)
 
-    val peopleDataResponseTotal = PeopleDataResponse(mutableMapOf())
-
     logger.info("Start batch request")
     val start2 = LocalDateTime.now()
     for (i in 0 until requestData.personidenter.size step 500) {
@@ -95,8 +93,11 @@ fun Application.configureRouting() {
         } else {
             authenticate {
                 post(personerEndpointString) {
-                    logger.info("Inside request for personer")
+                    logger.info("Process request")
+                    val start = LocalDateTime.now()
                     personerEndpointResponse(this)
+                    val end = LocalDateTime.now()
+                    logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
                 }
             }
         }
