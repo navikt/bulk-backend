@@ -8,10 +8,15 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
 import no.nav.bulk.models.PeopleDataResponse
+import java.lang.Integer.max
 import java.lang.Integer.min
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -31,46 +36,93 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     val call = pipelineContext.call
     val requestData: PeopleDataRequest
     logger.info("Deserialize request data")
-    val start1 = LocalDateTime.now()
+    val startCallReceive = LocalDateTime.now()
     try {
         requestData = call.receive()
     } catch (e: CannotTransformContentToTypeException) {
         return call.respond(HttpStatusCode.BadRequest)
     }
-    val end1 = LocalDateTime.now()
-    logger.info("Time Deserialize request data: ${start1.until(end1, ChronoUnit.MILLIS)}ms")
+    val endCallReceive = LocalDateTime.now()
+    logger.info("Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)}ms")
 
     // TODO: remove log
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
+
     // TODO: log the requested data, who requested the data, etc. 
     val responseFormat =
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
     val accessToken = getAccessToken() ?: return call.respond(HttpStatusCode.Unauthorized)
 
     logger.info("Start batch request")
-    val start2 = LocalDateTime.now()
-    for (i in 0 until requestData.personidenter.size step 500) {
-        val end = min(i + 500, requestData.personidenter.size)
-        val digDirResponse = getContactInfo(
-            requestData.personidenter.slice(i until end),
-            accessToken = accessToken
-        ) ?: return call.respond(HttpStatusCode.InternalServerError)
-        val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
-        (peopleDataResponseTotal.personer as MutableMap).putAll(filteredPeopleInfo.personer)
-    }
-    val end2 = LocalDateTime.now()
-    logger.info("Time batch request: ${start2.until(end2, ChronoUnit.SECONDS)}s")
+    val startBatchRequest = LocalDateTime.now()
+
+    val peopleDataResponse = PeopleDataResponse(mutableMapOf())
+    constructPeopleDataResponse(requestData, accessToken, peopleDataResponse)
+
+    val endBatchRequest = LocalDateTime.now()
+    logger.info("Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec")
 
     // At this stage, all the communication with DigDir is done
-    logger.info("Size of personer map: ${peopleDataResponseTotal.personer.size}")
+    logger.info("Size of personer map: ${peopleDataResponse.personer.size}")
+    respondCall(call, peopleDataResponse, responseFormat)
+}
 
+suspend fun constructPeopleDataResponse(
+    requestData: PeopleDataRequest,
+    accessToken: String,
+    peopleDataResponseTotal: PeopleDataResponse
+) {
+    val numThreads = min(max(requestData.personidenter.size / 10_000, 1) , 20)
+    val batchSizeForThreads = requestData.personidenter.size / numThreads
+    val deferredMutableList = mutableListOf<Deferred<PeopleDataResponse>>()
+
+    coroutineScope {
+        launch {
+            for (i in 0 until numThreads) {
+                val deferred = async {
+                    getPeopleDataResponse(requestData, accessToken, i, batchSizeForThreads)
+                }
+                deferredMutableList.add(deferred)
+            }
+        }
+    }
+    for (deferred in deferredMutableList) {
+        val peopleDataResponse = deferred.await()
+        (peopleDataResponseTotal.personer as MutableMap).putAll(peopleDataResponse.personer)
+    }
+}
+
+suspend fun getPeopleDataResponse(
+    requestData: PeopleDataRequest,
+    accessToken: String,
+    threadId: Int,
+    batchSize: Int): PeopleDataResponse {
+    val peopleDataResponse = PeopleDataResponse(mutableMapOf())
+    val stepSize = 500
+
+    for (j in threadId * batchSize until threadId * batchSize + batchSize step stepSize) {
+        val end = min(j + stepSize, requestData.personidenter.size)
+        val digDirResponse = getContactInfo(
+            requestData.personidenter.slice(j until end),
+            accessToken = accessToken
+        ) ?: continue
+        val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
+        (peopleDataResponse.personer as MutableMap).putAll(filteredPeopleInfo.personer)
+    }
+    return peopleDataResponse
+}
+
+suspend fun respondCall(
+    call: ApplicationCall,
+    peopleDataResponse: PeopleDataResponse,
+    responseFormat: ResponseFormat) {
     if (responseFormat == ResponseFormat.CSV) {
-        val start3 = LocalDateTime.now()
-        val peopleCSV = mapToCSV(peopleDataResponseTotal)
-        val end3 = LocalDateTime.now()
-        logger.info("Time mapping to CSV: ${start3.until(end3, ChronoUnit.MILLIS)}ms")
+        val startMapToCSV = LocalDateTime.now()
+        val peopleCSV = mapToCSV(peopleDataResponse)
+        val endMapToCSV = LocalDateTime.now()
+        logger.info("Time mapping to CSV: ${startMapToCSV.until(endMapToCSV, ChronoUnit.MILLIS)} ms")
         call.respondText(peopleCSV)
-    } else call.respond(peopleDataResponseTotal)
+    } else call.respond(peopleDataResponse)
 }
 
 fun Application.configureRouting() {
