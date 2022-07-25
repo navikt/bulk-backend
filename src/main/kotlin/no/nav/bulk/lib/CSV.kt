@@ -4,8 +4,9 @@ import no.nav.bulk.models.PeopleDataResponse
 
 fun mapToCSV(peopleData: PeopleDataResponse): String {
     val p = StringBuilder()
-    p.append("Personident,Språk,E-post,Mobilnummer,Adresse,Feil\n")
+    p.append("Personident,Språk,E-post,Mobilnummer,Adresse,Feil")
     for ((personident, personData) in peopleData.personer) {
+        p.append("\n")
         p.append(personident)
         p.append(',')
         p.append(personData.person?.spraak ?: "")
@@ -17,7 +18,6 @@ fun mapToCSV(peopleData: PeopleDataResponse): String {
         p.append(personData.person?.adresse ?: "")
         p.append(',')
         p.append(personData.feil ?: "")
-        p.append("\n")
     }
     return p.toString()
 }
