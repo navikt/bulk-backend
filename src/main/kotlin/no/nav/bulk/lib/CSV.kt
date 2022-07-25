@@ -1,12 +1,10 @@
 package no.nav.bulk.lib
 
-import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataResponse
 
 fun mapToCSV(peopleData: PeopleDataResponse): String {
-    // With 200k pnrs, this processing can take 7 minutes!!!
     return peopleData.personer.map { (personident, personData) ->
-        var p = StringBuilder()
+        val p = StringBuilder()
         p.append(personident)
         p.append(',')
         p.append(personData.person?.spraak ?: "")
