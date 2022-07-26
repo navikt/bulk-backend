@@ -13,6 +13,7 @@ import io.ktor.server.plugins.partialcontent.*
 import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.RunEnv
 import no.nav.bulk.lib.isDevelopment
+import no.nav.bulk.lib.isProduction
 import no.nav.bulk.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -67,7 +68,14 @@ fun Application.configureAuth() {
                         logger.error("Auth: Missing audience in token")
                     }
                     require(credentials.payload.audience.contains(AuthConfig.FRONTEND_CLIENT_ID)) {
-                        logger.error( "Auth: Valid audience not found in claims")
+                        logger.error("Auth: Valid audience not found in claims")
+                    }
+
+                    require(credentials.payload.getClaim("groups").asList(String::class.java).any {
+                        it == AuthConfig.TEAM_BULK_GROUP_ID_DEV && RunEnv.isDevelopment() ||
+                        it == AuthConfig.TEAM_BULK_GROUP_ID_PROD && RunEnv.isProduction()
+                    }) {
+                        logger.error("Auth: must be member of team bulk")
                     }
 
                     logger.info("${credentials.payload.getClaim("name")} is authenticated")
