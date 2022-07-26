@@ -34,6 +34,10 @@ enum class ResponseFormat {
  */
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
+    val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return call.respond(HttpStatusCode.Unauthorized)
+    logger.info("Accesstoken: $accessToken")
+    val onBehalfOfAccessToken = getAccessToken(accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
+
     val requestData: PeopleDataRequest
     logger.info("Deserialize request data")
     val startCallReceive = LocalDateTime.now()
@@ -51,13 +55,12 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     // TODO: log the requested data, who requested the data, etc. 
     val responseFormat =
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
-    val accessToken = getAccessToken() ?: return call.respond(HttpStatusCode.Unauthorized)
 
     logger.info("Start batch request")
     val startBatchRequest = LocalDateTime.now()
 
     val peopleDataResponse = PeopleDataResponse(mutableMapOf())
-    constructPeopleDataResponse(requestData, accessToken, peopleDataResponse)
+    constructPeopleDataResponse(requestData, onBehalfOfAccessToken, peopleDataResponse)
 
     val endBatchRequest = LocalDateTime.now()
     logger.info("Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec")
