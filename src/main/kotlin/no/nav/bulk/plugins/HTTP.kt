@@ -52,7 +52,7 @@ fun Application.configureAuth() {
                 try {
                     // token has a subject claim
                     requireNotNull(credentials.payload.subject) {
-                        logger.error("Auth: Missing subject in token")
+                        logger.error("Auth: Missing subject in token: '${credentials.payload.subject}'")
                     }
 
                     // token has a valid issuer claim
@@ -60,7 +60,7 @@ fun Application.configureAuth() {
                         logger.error("Auth: missing issuer in token")
                     }
                     require(credentials.payload.issuer.equals(AuthConfig.azureADConfig.issuer)) {
-                        logger.error("Auth: Valid issuer not found in token")
+                        logger.error("Auth: Valid issuer not found in token: '${credentials.payload.issuer}'")
                     }
 
                     // Token does not have an audience claim
@@ -68,20 +68,13 @@ fun Application.configureAuth() {
                         logger.error("Auth: Missing audience in token")
                     }
                     require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
-                        logger.error("Auth: Valid audience not found in claims")
-                    }
-
-                    require(credentials.payload.getClaim("groups").asList(String::class.java).any {
-                        it == AuthConfig.TEAM_BULK_GROUP_ID_DEV && RunEnv.isDevelopment() ||
-                        it == AuthConfig.TEAM_BULK_GROUP_ID_PROD && RunEnv.isProduction()
-                    }) {
-                        logger.error("Auth: must be member of team bulk")
+                        logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}'")
                     }
 
                     logger.info("${credentials.payload.getClaim("name")} is authenticated")
                     return@validate JWTPrincipal(credentials.payload)
                 } catch (e: Throwable) {
-                    logger.error("Auth: Error validating token", e)
+                    logger.error("Auth: Error validating token", e.message)
                     return@validate null
                 }
             }
