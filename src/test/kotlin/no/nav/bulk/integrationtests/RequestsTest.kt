@@ -12,10 +12,12 @@ import io.ktor.server.util.*
 import io.ktor.util.*
 import no.nav.bulk.initializeHttpClient
 import no.nav.bulk.lib.AuthConfig
-import no.nav.bulk.lib.getAccessToken
+import no.nav.bulk.lib.Endpoints
 import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
+import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
+import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import kotlin.test.assertEquals
@@ -142,4 +144,15 @@ class RequestsTest {
             throw e
         }
     }
+}
+
+fun getAccessToken(): String? {
+    val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
+    val tokenClient: AzureAdMachineToMachineTokenClient? = builder
+        .withClientId(AuthConfig.CLIENT_ID)
+        .withPrivateJwk(AuthConfig.CLIENT_JWK)
+        .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
+        .buildMachineToMachineTokenClient()
+
+    return tokenClient?.createMachineToMachineToken(AuthConfig.SCOPE)
 }
