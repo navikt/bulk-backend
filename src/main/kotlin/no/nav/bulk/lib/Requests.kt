@@ -11,17 +11,18 @@ import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
 import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
+import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
 import java.util.*
 
-fun getAccessToken(): String? {
+fun getAccessToken(accessToken: String): String? {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
-    val tokenClient: AzureAdMachineToMachineTokenClient = builder
+    val tokenClient: AzureAdOnBehalfOfTokenClient = builder
         .withClientId(AuthConfig.CLIENT_ID)
         .withPrivateJwk(AuthConfig.CLIENT_JWK)
         .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
-        .buildMachineToMachineTokenClient()
+        .buildOnBehalfOfTokenClient()
 
-    return tokenClient.createMachineToMachineToken(AuthConfig.SCOPE)
+    return tokenClient.exchangeOnBehalfOfToken(AuthConfig.SCOPE, accessToken)
 }
 
 suspend fun getContactInfo(

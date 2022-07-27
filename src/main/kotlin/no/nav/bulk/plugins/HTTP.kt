@@ -67,7 +67,7 @@ fun Application.configureAuth() {
                     requireNotNull(credentials.payload.audience) {
                         logger.error("Auth: Missing audience in token")
                     }
-                    require(credentials.payload.audience.contains(AuthConfig.FRONTEND_CLIENT_ID)) {
+                    require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
                         logger.error("Auth: Valid audience not found in claims")
                     }
 
