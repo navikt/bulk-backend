@@ -35,10 +35,9 @@ enum class ResponseFormat {
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
     val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return call.respond(HttpStatusCode.Unauthorized)
-    logger.info("Accesstoken: $accessToken")
     val onBehalfOfAccessToken = getAccessToken(accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
-
     val requestData: PeopleDataRequest
+
     logger.info("Deserialize request data")
     val startCallReceive = LocalDateTime.now()
     try {
