@@ -9,7 +9,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "256M"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 spec:
-  image: {{ image }}
+  image: { { image } }
   port: 8080
   accessPolicy:
     inbound:
@@ -37,13 +37,13 @@ spec:
     application:
       enabled: true
       tenant: trygdeetaten.no
-      claim:
-        groups:
-          - id: "e08a856f-6e64-48b0-978b-5b201760fa13" # Prod bulk
-          - id: "0242dce3-f722-4c6b-ac97-2dd7cc798c4e" # Pre-prod bulk
+  #      claim:
+  #        groups:
+  #          - id: "e08a856f-6e64-48b0-978b-5b201760fa13" # Prod bulk
+  #          - id: "0242dce3-f722-4c6b-ac97-2dd7cc798c4e" # Pre-prod bulk
   env:
-      - name: FRONTEND_CLIENT_ID
-        value: 6117bfb9-e769-4d9f-a3e0-1e117fee6d6b
+    - name: FRONTEND_CLIENT_ID
+      value: 6117bfb9-e769-4d9f-a3e0-1e117fee6d6b
   resources:
     limits:
       cpu: "1000m"
