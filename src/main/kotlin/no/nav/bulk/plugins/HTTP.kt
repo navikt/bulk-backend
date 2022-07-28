@@ -59,7 +59,7 @@ fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer) 
                         logger.error("Auth: missing issuer in token")
                     }
                     require(credentials.payload.issuer.equals(AuthConfig.azureADConfig.issuer)) {
-                        logger.error("Auth: Valid issuer not found in token: '${credentials.payload.issuer}'")
+                        logger.error("Auth: Valid issuer not found in token: '${credentials.payload.issuer}' != '${AuthConfig.azureADConfig.issuer}'")
                     }
 
                     // Token does not have an audience claim
@@ -67,13 +67,13 @@ fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer) 
                         logger.error("Auth: Missing audience in token")
                     }
                     require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
-                        logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}'")
+                        logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}' != '${AuthConfig.CLIENT_ID}'")
                     }
 
                     logger.info("${credentials.payload.getClaim("name")} is authenticated")
                     return@validate JWTPrincipal(credentials.payload)
                 } catch (e: Throwable) {
-                    logger.error("Auth: Error validating token ${e.message}")
+                    logger.error("Auth: Error validating token: ${e.message}")
                     return@validate null
                 }
             }

@@ -20,6 +20,7 @@ import java.lang.Integer.max
 import java.lang.Integer.min
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 
 enum class ResponseFormat {
@@ -37,6 +38,12 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return call.respond(HttpStatusCode.Unauthorized)
     logger.info("Accesstoken: $accessToken")
     val onBehalfOfAccessToken = getAccessToken(accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
+
+    val navCallId =
+        call.request.headers["Nav-Call-Id"]
+        .also { logger.info("Forward Nav-Call-Id: $it") } ?:
+        UUID.randomUUID().toString()
+        .also { logger.info("Create new Nav-Call-Id: $it") }
 
     val requestData: PeopleDataRequest
     logger.info("Deserialize request data")
@@ -60,7 +67,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     val startBatchRequest = LocalDateTime.now()
 
     val peopleDataResponse = PeopleDataResponse(mutableMapOf())
-    constructPeopleDataResponse(requestData, onBehalfOfAccessToken, peopleDataResponse)
+    constructPeopleDataResponse(requestData, onBehalfOfAccessToken, navCallId, peopleDataResponse)
 
     val endBatchRequest = LocalDateTime.now()
     logger.info("Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec")
@@ -73,6 +80,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 suspend fun constructPeopleDataResponse(
     requestData: PeopleDataRequest,
     accessToken: String,
+    navCallId: String,
     peopleDataResponseTotal: PeopleDataResponse
 ) {
     val numThreads = min(max(requestData.personidenter.size / 10_000, 1) , 20)
@@ -83,7 +91,7 @@ suspend fun constructPeopleDataResponse(
         launch {
             for (i in 0 until numThreads) {
                 val deferred = async {
-                    getPeopleDataResponse(requestData, accessToken, i, batchSizeForThreads)
+                    getPeopleDataResponse(requestData, accessToken, navCallId, i, batchSizeForThreads)
                 }
                 deferredMutableList.add(deferred)
             }
@@ -98,6 +106,7 @@ suspend fun constructPeopleDataResponse(
 suspend fun getPeopleDataResponse(
     requestData: PeopleDataRequest,
     accessToken: String,
+    navCallId: String,
     threadId: Int,
     batchSize: Int): PeopleDataResponse {
     val peopleDataResponse = PeopleDataResponse(mutableMapOf())
@@ -107,7 +116,8 @@ suspend fun getPeopleDataResponse(
         val end = min(j + stepSize, requestData.personidenter.size)
         val digDirResponse = getContactInfo(
             requestData.personidenter.slice(j until end),
-            accessToken = accessToken
+            accessToken = accessToken,
+            navCallId = navCallId
         ) ?: continue
         val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
         (peopleDataResponse.personer as MutableMap).putAll(filteredPeopleInfo.personer)
