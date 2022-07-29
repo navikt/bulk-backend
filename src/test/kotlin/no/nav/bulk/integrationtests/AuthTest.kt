@@ -1,10 +1,32 @@
 package no.nav.bulk.integrationtests
 
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.plugins.callloging.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.testing.*
+import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.runBlocking
+import no.nav.bulk.client
+import no.nav.bulk.initializeHttpClient
+import no.nav.bulk.lib.AuthConfig.CLIENT_ID
+import no.nav.bulk.plugins.configureAuth
+import no.nav.bulk.plugins.configureHTTP
+import no.nav.bulk.plugins.configureRouting
 import org.junit.jupiter.api.Test
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.OAuth2Config
 import no.nav.security.mock.oauth2.http.routes
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import no.nav.security.mock.oauth2.withMockOAuth2Server
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
+import org.slf4j.event.Level
+import kotlin.test.assertEquals
 
 class AuthTest() {
     companion object {
