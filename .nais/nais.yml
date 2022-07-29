@@ -39,9 +39,9 @@ spec:
       tenant: trygdeetaten.no
         claims:
           groups:
-          {{ #each groups as |group| }}
+          {{#each groups as |group|}}
             - {{ group }}
-          {{ /each }}
+          {{/each}}
 
   resources:
     limits:
