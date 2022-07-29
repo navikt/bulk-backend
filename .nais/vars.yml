@@ -3,5 +3,5 @@ namespace: team-bulk
 team: team-bulk
 image: ghcr.io/navikt/bulk-backend:latest
 groups:
-  - id: "e08a856f-6e64-48b0-978b-5b201760fa13" # Prod bulk
-  - id: "0242dce3-f722-4c6b-ac97-2dd7cc798c4e" # Pre-prod bulk
+  - "e08a856f-6e64-48b0-978b-5b201760fa13" # Prod bulk
+  - "0242dce3-f722-4c6b-ac97-2dd7cc798c4e" # Pre-prod bulk

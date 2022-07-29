@@ -40,7 +40,7 @@ spec:
         claims:
           groups:
           {{#each groups as |group|}}
-            - {{ group }}
+            - id: {{ group }}
           {{/each}}
 
   resources:
