@@ -25,7 +25,6 @@ object AuthConfig {
     val CLIENT_ID: String = dotenv["AZURE_APP_CLIENT_ID"]
     val CLIENT_JWK: String = dotenv["AZURE_APP_JWK"]
     private val AZURE_APP_WELL_KNOWN_URL: String = dotenv["AZURE_APP_WELL_KNOWN_URL"]
-    val FRONTEND_CLIENT_ID: String = dotenv["FRONTEND_CLIENT_ID"]
     val azureADConfig: AzureAdOpenIdConfiguration = runBlocking {
         client.get(AZURE_APP_WELL_KNOWN_URL).body()
     }

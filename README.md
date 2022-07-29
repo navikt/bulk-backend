@@ -1,10 +1,10 @@
-# bulk-backend
+# 🪨🔙🔚 bulk-backend 
 
 Dette prosjektet representerer backenden for bulk-uttrekk av kontaktinformasjon fra KRR.
 
-## Utvikling
+## 🔬 Utvikling
 
-### Miljøvariabler
+### ♻️ Miljøvariabler
 
 Dette prosjektet krever Java 17 eller høyere installert og bruker ellers Kotlin og Gradle.
 
@@ -44,7 +44,7 @@ kubectl exec bulk-backend-XXXXXXXXXX-XXXXX -n team-bulk -- env | grep AZURE_APP
 Dette vil returnere alle miljøvariablene for podden bulk-backend kjører på som inneholder strengen AZURE_APP.
 Her kan du finne AZURE_APP_JWK som kan kopieres inn i `.env` filen.
 
-### Kjøring
+### 🏎️ Kjøring
 
 Etter å ha satt opp `.env` filen kan man kjøre `bulk-backend` (fra bulk-backend mappen) med
 
@@ -52,7 +52,7 @@ Etter å ha satt opp `.env` filen kan man kjøre `bulk-backend` (fra bulk-backen
 ./gradlew run
 ```
 
-## Testing
+## 🧪 Testing
 
 Etter å ha satt opp `.env` filen kan man kjøre unit testene i `bulk-backend` (fra bulk-backend mappen) med
 
