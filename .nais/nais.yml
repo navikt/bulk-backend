@@ -2,9 +2,9 @@ apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
   name: {{ app }}
-  namespace: {{ namespace }}
+  namespace: team-bulk
   labels:
-    team: {{ team }}
+    team: team-bulk
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "256M"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
