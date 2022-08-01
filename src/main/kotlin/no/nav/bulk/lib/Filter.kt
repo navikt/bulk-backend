@@ -25,8 +25,7 @@ fun isValidContactInfo(personInfo: DigDirPerson): DigDirPersonValidationResult {
     val outdatedPhone = !isValidUpdatedDate(personInfo.mobiltelefonnummerOppdatert)
     val nullEmail = personInfo.epostadresse == null
     val nullPhone = personInfo.mobiltelefonnummer == null
-    if (oudatedEmail && outdatedPhone) return DigDirPersonValidationResult.Fail(FeilType.UTDATERT_KONTAKTINFORMASJON)
-    if (oudatedEmail && nullPhone) return DigDirPersonValidationResult.Fail(FeilType.UTDATERT_KONTAKTINFORMASJON)
+    if (oudatedEmail && (outdatedPhone || nullPhone)) return DigDirPersonValidationResult.Fail(FeilType.UTDATERT_KONTAKTINFORMASJON)
     if (outdatedPhone && nullEmail) return DigDirPersonValidationResult.Fail(FeilType.UTDATERT_KONTAKTINFORMASJON)
     if (nullEmail && nullPhone) return DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     if (oudatedEmail || nullEmail) return DigDirPersonValidationResult.Success(SuccessCaveat.INVALID_EMAIL)
