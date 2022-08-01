@@ -12,8 +12,9 @@ import io.ktor.server.plugins.defaultheaders.*
 import io.ktor.server.plugins.partialcontent.*
 import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.RunEnv
-import no.nav.bulk.lib.isDevelopment
+import no.nav.bulk.lib.isProduction
 import no.nav.bulk.logger
+import no.nav.bulk.models.AzureAdOpenIdConfiguration
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -33,17 +34,14 @@ fun Application.configureHTTP() {
     install(AutoHeadResponse)
 }
 
-fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer, jwksUrl: String = AuthConfig.azureADConfig.jwksUri) {
-    if (RunEnv.isDevelopment()) return
-
-    logger.info("Configuring auth")
+fun Application.configureAuth(azureAdConfig: AzureAdOpenIdConfiguration) {
     install(Authentication) {
         jwt {
             // provides a JWTVerifier that is used to verify a token format and signature
-            val jwkProvider = buildJwkProvider(jwksUrl)
+             val jwkProvider = buildJwkProvider(azureAdConfig.jwksUri)
 
             // register the provider
-            verifier(jwkProvider, issuer)
+            verifier(jwkProvider, azureAdConfig.issuer)
 
             validate { credentials: JWTCredential ->
                 logger.info("Try to verify token")
@@ -58,7 +56,9 @@ fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer, 
                     requireNotNull(credentials.payload.issuer) {
                         logger.error("Auth: missing issuer in token")
                     }
-                    require(credentials.payload.issuer.equals(AuthConfig.azureADConfig.issuer)) {
+                    val conn = azureAdConfig
+                    println(conn)
+                    require(credentials.payload.issuer.equals(azureAdConfig.issuer)) {
                         logger.error("Auth: Valid issuer not found in token: '${credentials.payload.issuer}'")
                     }
 
@@ -68,6 +68,15 @@ fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer, 
                     }
                     require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
                         logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}'")
+                    }
+
+                    val groupsPredicate: (String) -> Boolean = {
+                        if (RunEnv.isProduction()) it.contains(AuthConfig.TEAM_BULK_GROUP_ID_PROD) else it.contains(AuthConfig.TEAM_BULK_GROUP_ID_DEV)
+                    }
+                    val authorizedGroup = if (RunEnv.isProduction()) AuthConfig.TEAM_BULK_GROUP_ID_PROD else AuthConfig.TEAM_BULK_GROUP_ID_DEV
+
+                    require(credentials.payload.getClaim("groups").`asList`(String::class.java).contains(authorizedGroup)) {
+                        logger.error("Auth: Valid group not found in claims: ${credentials.payload.getClaim("groups")} != [${AuthConfig.TEAM_BULK_GROUP_ID_PROD}, ${AuthConfig.TEAM_BULK_GROUP_ID_DEV}]")
                     }
 
                     logger.info("${credentials.payload.getClaim("name")} is authenticated")

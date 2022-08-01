@@ -6,6 +6,7 @@ import io.ktor.client.request.*
 import kotlinx.coroutines.runBlocking
 import no.nav.bulk.client
 import no.nav.bulk.models.AzureAdOpenIdConfiguration
+import no.nav.bulk.models.buildAzureADConfig
 
 val dotenv = dotenv {
     ignoreIfMissing = true
@@ -25,9 +26,7 @@ object AuthConfig {
     val CLIENT_ID: String = dotenv["AZURE_APP_CLIENT_ID"]
     val CLIENT_JWK: String = dotenv["AZURE_APP_JWK"]
     private val AZURE_APP_WELL_KNOWN_URL: String = dotenv["AZURE_APP_WELL_KNOWN_URL"]
-    val azureADConfig: AzureAdOpenIdConfiguration = runBlocking {
-        client.get(AZURE_APP_WELL_KNOWN_URL).body()
-    }
+    val azureADConfig: AzureAdOpenIdConfiguration = buildAzureADConfig(AZURE_APP_WELL_KNOWN_URL)
 }
 
 object Endpoints {
