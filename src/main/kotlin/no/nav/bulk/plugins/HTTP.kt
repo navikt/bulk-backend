@@ -33,7 +33,7 @@ fun Application.configureHTTP() {
     install(AutoHeadResponse)
 }
 
-fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer) {
+fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer, jwksUrl: String = AuthConfig.azureADConfig.jwksUri) {
     if (RunEnv.isDevelopment()) return
 
     logger.info("Configuring auth")

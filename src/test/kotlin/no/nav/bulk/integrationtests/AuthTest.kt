@@ -23,13 +23,15 @@ import kotlin.test.assertEquals
 
 class AuthTest() {
     companion object {
-        private val server = MockOAuth2Server()
-        const val issuerid = "azure"
+        private val server = MockOAuth2Server(config=OAuth2Config.fromJson(MOCK_AUTH_JSON_CONFIG))
+        const val issuerId = "azure"
+        const val jwkProviderUrl = "http://localhost:8080/$issuerId/.well-known/openid-configuration"
 
         @JvmStatic
         @BeforeAll
         fun setup() {
             initializeHttpClient()
+            server.wellKnownUrl(issuerId)
             server.start()
         }
         @JvmStatic
@@ -44,7 +46,7 @@ class AuthTest() {
             initializeHttpClient()
             configureRouting()
             configureHTTP()
-            configureAuth(issuerid)
+            configureAuth(issuerId, jwkProviderUrl)
 
         }
         install(ContentNegotiation) { json() }
@@ -65,19 +67,21 @@ class AuthTest() {
     fun `please work`() = testApplication {
         configTestApp()
         val res = client.post("/personer") {
-            header("Authorization", "Bearer ${server.tokenFromProvider1()}")
+            header("Authorization", "Bearer ${server.tokenFromAzureAd()}")
         }
         println(res.bodyAsText())
         assertEquals(HttpStatusCode.OK, res.status)
     }
 
 
-    private fun MockOAuth2Server.tokenFromProvider1() =
+    private fun MockOAuth2Server.tokenFromAzureAd() =
         issueToken(
-            "azure",
-            "taper",
+            issuerId = issuerId,
+            subject = "taper",
             audience = CLIENT_ID,
-            claims = mapOf("groups" to listOf("group1", "group2"))
+            claims = mapOf(
+                "groups" to listOf(AuthConfig.TEAM_BULK_GROUP_ID_DEV)
+            )
         ).serialize()
 
 
