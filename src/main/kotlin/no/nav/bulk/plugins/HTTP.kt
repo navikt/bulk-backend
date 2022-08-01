@@ -13,7 +13,6 @@ import io.ktor.server.plugins.partialcontent.*
 import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.RunEnv
 import no.nav.bulk.lib.isDevelopment
-import no.nav.bulk.lib.isProduction
 import no.nav.bulk.logger
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -34,17 +33,17 @@ fun Application.configureHTTP() {
     install(AutoHeadResponse)
 }
 
-fun Application.configureAuth() {
+fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer) {
     if (RunEnv.isDevelopment()) return
 
     logger.info("Configuring auth")
     install(Authentication) {
         jwt {
             // provides a JWTVerifier that is used to verify a token format and signature
-            val jwkProvider = buildJwkProvider()
+            val jwkProvider = buildJwkProvider(AuthConfig.azureADConfig.jwksUri)
 
             // register the provider
-            verifier(jwkProvider, AuthConfig.azureADConfig.issuer)
+            verifier(jwkProvider, issuer)
 
             validate { credentials: JWTCredential ->
                 logger.info("Try to verify token")
@@ -74,7 +73,7 @@ fun Application.configureAuth() {
                     logger.info("${credentials.payload.getClaim("name")} is authenticated")
                     return@validate JWTPrincipal(credentials.payload)
                 } catch (e: Throwable) {
-                    logger.error("Auth: Error validating token", e.message)
+                    logger.error("Auth: Error validating token ${e.message}")
                     return@validate null
                 }
             }
@@ -82,9 +81,9 @@ fun Application.configureAuth() {
     }
 }
 
-fun buildJwkProvider(): JwkProvider {
+fun buildJwkProvider(jwkProviderUrl: String): JwkProvider {
     // https://github.com/nais/examples/blob/main/sec-blueprints/service-to-service/api-onbehalfof-ktor/src/main/kotlin/no/nav/security/examples/ProtectedOnBehalfOfApp.kt
-    return JwkProviderBuilder(URL(AuthConfig.azureADConfig.jwksUri))
+    return JwkProviderBuilder(URL(jwkProviderUrl))
         .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
         .rateLimited(
             10,
