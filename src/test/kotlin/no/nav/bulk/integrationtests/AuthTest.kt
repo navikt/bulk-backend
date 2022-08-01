@@ -8,11 +8,13 @@ import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
 import no.nav.bulk.initializeHttpClient
+import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.AuthConfig.CLIENT_ID
 import no.nav.bulk.plugins.configureAuth
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import no.nav.security.mock.oauth2.OAuth2Config
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

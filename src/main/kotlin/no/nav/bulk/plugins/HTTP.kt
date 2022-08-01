@@ -40,7 +40,7 @@ fun Application.configureAuth(issuer: String = AuthConfig.azureADConfig.issuer) 
     install(Authentication) {
         jwt {
             // provides a JWTVerifier that is used to verify a token format and signature
-            val jwkProvider = buildJwkProvider(AuthConfig.azureADConfig.jwksUri)
+            val jwkProvider = buildJwkProvider(jwksUrl)
 
             // register the provider
             verifier(jwkProvider, issuer)
