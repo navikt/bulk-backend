@@ -82,18 +82,7 @@ fun filterAndMapDigDirResponse(digDirResponse: DigDirResponse): PeopleDataRespon
         }
     }
     for ((personident, feil) in digDirResponse.feil) {
-        when (DigDirFeil.valueOf(feil.name)) {
-            DigDirFeil.PERSON_IKKE_FUNNET -> peopleResponseMap[personident] =
-                PersonData(null, FeilType.PERSON_IKKE_FUNNET)
-            DigDirFeil.SKJERMET -> peopleResponseMap[personident] =
-                PersonData(null, FeilType.SKJERMET)
-            DigDirFeil.STRENGT_FORTROLIG_ADRESSE -> peopleResponseMap[personident] =
-                PersonData(null, FeilType.STRENGT_FORTROLIG_ADRESSE)
-            DigDirFeil.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE -> peopleResponseMap[personident] =
-                PersonData(null, FeilType.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE)
-            DigDirFeil.FORTROLIG_ADRESSE -> peopleResponseMap[personident] =
-                PersonData(null, FeilType.FORTROLIG_ADRESSE)
-        }
+        peopleResponseMap[personident] = PersonData(null, FeilType.valueOf(feil.name))
     }
     return PeopleDataResponse(peopleResponseMap)
 }
