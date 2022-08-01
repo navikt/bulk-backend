@@ -17,7 +17,7 @@ fun mapToCSV(peopleData: PeopleDataResponse): String {
         p.append(',')
         p.append(personData.person?.adresse ?: "")
         p.append(',')
-        p.append(personData.feil ?: "")
+        p.append(personData.feil?.value ?: "")
     }
     return p.toString()
 }
