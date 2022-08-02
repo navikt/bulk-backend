@@ -1,4 +1,4 @@
-package no.nav.bulk.integrationtests
+package no.nav.bulk.lib
 
 import io.github.cdimascio.dotenv.dotenv
 
