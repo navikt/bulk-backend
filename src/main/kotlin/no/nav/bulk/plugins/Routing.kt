@@ -35,17 +35,16 @@ enum class ResponseFormat {
  */
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
-    val accessToken =
-            call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
-                    ?: return call.respond(HttpStatusCode.Unauthorized)
-    val onBehalfOfAccessToken =
-            getAccessToken(accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
+    val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return call.respond(
+        HttpStatusCode.Unauthorized
+    )
+    val onBehalfOfAccessToken = getAccessToken(accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
 
-    val navCallId =
-            call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") }
-                    ?: UUID.randomUUID().toString().also {
-                        logger.info("Create new Nav-Call-Id: $it")
-                    }
+    val navCallId = call.request.headers["Nav-Call-Id"].also {
+        logger.info("Forward Nav-Call-Id: $it")
+    } ?: UUID.randomUUID().toString().also {
+        logger.info("Create new Nav-Call-Id: $it")
+    }
 
     val requestData: PeopleDataRequest
     val startCallReceive = LocalDateTime.now()
@@ -55,22 +54,18 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         return call.respond(HttpStatusCode.BadRequest)
     }
     val endCallReceive = LocalDateTime.now()
-    logger.info(
-            "Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)}ms"
-    )
+    logger.info("Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)}ms")
 
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
 
     val responseFormat =
-            if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
-            else ResponseFormat.JSON
+        if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
+        else ResponseFormat.JSON
     val startBatchRequest = LocalDateTime.now()
     val peopleDataResponse =
             constructPeopleDataResponse(requestData, onBehalfOfAccessToken, navCallId)
     val endBatchRequest = LocalDateTime.now()
-    logger.info(
-            "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
-    )
+    logger.info("Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec")
 
     // At this stage, all the communication with DigDir is done
     respondCall(call, peopleDataResponse, responseFormat)
@@ -90,13 +85,7 @@ suspend fun constructPeopleDataResponse(
         launch {
             for (i in 0 until numThreads) {
                 val deferred = async {
-                    getPeopleDataResponse(
-                            requestData,
-                            accessToken,
-                            navCallId,
-                            i,
-                            batchSizeForThreads
-                    )
+                    getPeopleDataResponse(requestData, accessToken, navCallId, i, batchSizeForThreads)
                 }
                 deferredMutableList.add(deferred)
             }
@@ -110,11 +99,11 @@ suspend fun constructPeopleDataResponse(
 }
 
 suspend fun getPeopleDataResponse(
-        requestData: PeopleDataRequest,
-        accessToken: String,
-        navCallId: String,
-        threadId: Int,
-        batchSize: Int
+    requestData: PeopleDataRequest,
+    accessToken: String,
+    navCallId: String,
+    threadId: Int,
+    batchSize: Int
 ): PeopleDataResponse {
     val peopleDataResponse = PeopleDataResponse(mutableMapOf())
     val stepSize = 500
@@ -143,9 +132,7 @@ suspend fun respondCall(
         val startMapToCSV = LocalDateTime.now()
         val peopleCSV = mapToCSV(peopleDataResponse)
         val endMapToCSV = LocalDateTime.now()
-        logger.info(
-                "Time mapping to CSV: ${startMapToCSV.until(endMapToCSV, ChronoUnit.MILLIS)} ms"
-        )
+        logger.info("Time mapping to CSV: ${startMapToCSV.until(endMapToCSV, ChronoUnit.MILLIS)} ms")
         call.respondText(peopleCSV)
     } else call.respond(peopleDataResponse)
 }

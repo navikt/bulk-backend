@@ -78,7 +78,7 @@ fun Application.configureAuth(azureAdConfig: AzureAdOpenIdConfiguration) {
                     logger.info("${credentials.payload.getClaim("name")} is authenticated")
                     return@validate JWTPrincipal(credentials.payload)
                 } catch (e: Throwable) {
-                    logger.error("Auth: Error validating token: ${e.message}")
+                    logger.error("Auth: Error validating token ${e.message}")
                     return@validate null
                 }
             }
