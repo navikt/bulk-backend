@@ -65,7 +65,8 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
             if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
             else ResponseFormat.JSON
     val startBatchRequest = LocalDateTime.now()
-    val peopleDataResponse = constructPeopleDataResponse(requestData, onBehalfOfAccessToken)
+    val peopleDataResponse =
+            constructPeopleDataResponse(requestData, onBehalfOfAccessToken, navCallId)
     val endBatchRequest = LocalDateTime.now()
     logger.info(
             "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
