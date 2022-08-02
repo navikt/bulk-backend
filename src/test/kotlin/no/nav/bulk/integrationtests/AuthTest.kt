@@ -1,4 +1,4 @@
-package no.nav.bulk.lib
+package no.nav.bulk.integrationtests
 
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -7,6 +7,7 @@ import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
 import no.nav.bulk.initializeHttpClient
+import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.AuthConfig.CLIENT_ID
 import no.nav.bulk.models.buildAzureADConfig
 import no.nav.bulk.plugins.configureAuth

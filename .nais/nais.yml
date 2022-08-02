@@ -47,9 +47,5 @@ spec:
       cpu: "1000m"
       memory: "2048Mi"
 
-  env:
-    - name: JSON_CONFIG
-      value: "{\"interactiveLogin\": true,\"httpServer\": \"NettyWrapper\",\"tokenCallbacks\": [{\"issuerId\": \"azure\",\"tokenExpiry\": 120,\"requestMappings\": [{\"requestParam\": \"scope\",\"match\": \"azure\",\"claims\": {\"sub\": \"anyone\",\"aud\": [\"164ed994-0f36-4917-b397-d84813818c18\"], \"groups\": [\"0242dce3-f722-4c6b-ac97-2dd7cc798c4e\"]}}]}]}]}"
-
   ingresses:
     - https://bulk-backend.dev.intern.nav.no
