@@ -44,9 +44,6 @@ enum class DigDirFeil(val value: String) {
 /**
  * personer maps the person with the personident to the corresponding personinfo object
  * feil maps the personident from a PersonInfo object, into a String that contains the error message
- *
- * SikkerDigitalPostkasse
- * @param SikkerDigitalPostkasse
  */
 @kotlinx.serialization.Serializable
 data class DigDirResponse(val personer: Map<String, DigDirPerson>, val feil: Map<String, DigDirFeil>)

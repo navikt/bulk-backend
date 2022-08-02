@@ -1,0 +1,4 @@
+app: bulk-backend
+namespace: team-bulk
+team: team-bulk
+image: ghcr.io/navikt/bulk-backend:latest
