@@ -56,8 +56,7 @@ fun Application.configureAuth(azureAdConfig: AzureAdOpenIdConfiguration) {
                     requireNotNull(credentials.payload.issuer) {
                         logger.error("Auth: missing issuer in token")
                     }
-                    val conn = azureAdConfig
-                    println(conn)
+
                     require(credentials.payload.issuer.equals(azureAdConfig.issuer)) {
                         logger.error("Auth: Valid issuer not found in token: '${credentials.payload.issuer}'")
                     }
@@ -70,9 +69,6 @@ fun Application.configureAuth(azureAdConfig: AzureAdOpenIdConfiguration) {
                         logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}'")
                     }
 
-                    val groupsPredicate: (String) -> Boolean = {
-                        if (RunEnv.isProduction()) it.contains(AuthConfig.TEAM_BULK_GROUP_ID_PROD) else it.contains(AuthConfig.TEAM_BULK_GROUP_ID_DEV)
-                    }
                     val authorizedGroup = if (RunEnv.isProduction()) AuthConfig.TEAM_BULK_GROUP_ID_PROD else AuthConfig.TEAM_BULK_GROUP_ID_DEV
 
                     require(credentials.payload.getClaim("groups").`asList`(String::class.java).contains(authorizedGroup)) {
