@@ -47,5 +47,9 @@ spec:
       cpu: "1000m"
       memory: "2048Mi"
 
+  env:
+    - name: "ENVIRONMENT"
+      value: "development"
+
   ingresses:
     - https://bulk-backend.dev.intern.nav.no
