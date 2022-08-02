@@ -66,7 +66,7 @@ fun Application.configureAuth(azureAdConfig: AzureAdOpenIdConfiguration) {
                         logger.error("Auth: Missing audience in token")
                     }
                     require(credentials.payload.audience.contains(AuthConfig.CLIENT_ID)) {
-                        logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}'")
+                        logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}' != '${AuthConfig.CLIENT_ID}'")
                     }
 
                     val authorizedGroup = if (RunEnv.isProduction()) AuthConfig.TEAM_BULK_GROUP_ID_PROD else AuthConfig.TEAM_BULK_GROUP_ID_DEV

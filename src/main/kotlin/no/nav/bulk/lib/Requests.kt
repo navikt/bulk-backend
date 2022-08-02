@@ -27,14 +27,15 @@ fun getAccessToken(accessToken: String): String? {
 suspend fun getContactInfo(
     personnr: List<String>,
     clientArg: HttpClient? = null,
-    accessToken: String
+    accessToken: String,
+    navCallId: String
 ): DigDirResponse? {
     val localClient = clientArg ?: client
     val res = try {
         localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
             headers {
                 append(HttpHeaders.Authorization, "Bearer $accessToken")
-                append("Nav-Call-Id", UUID.randomUUID().toString())
+                append("Nav-Call-Id", navCallId)
             }
             contentType(ContentType.Application.Json)
             setBody(DigDirRequest(personnr))

@@ -20,6 +20,7 @@ import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -79,7 +80,7 @@ class RequestsTest {
                 "11111100000"
             )
             val accessToken = getAccessToken() ?: ""
-            val response = getContactInfo(testPersonidenter, accessToken = accessToken)
+            val response = getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
 
             if (response != null) {
                 assertEquals(2, response.feil.size)
@@ -108,7 +109,7 @@ class RequestsTest {
                 "07428827184",
             )
             val accessToken = getAccessToken() ?: ""
-            val response = getContactInfo(testPersonidenter, accessToken = accessToken)
+            val response = getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
 
             if (response != null) {
                 assertEquals(true, response.personer.isNotEmpty())
