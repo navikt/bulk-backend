@@ -58,12 +58,9 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
 
-    val responseFormat =
-        if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
-        else ResponseFormat.JSON
+    val responseFormat = if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
     val startBatchRequest = LocalDateTime.now()
-    val peopleDataResponse =
-            constructPeopleDataResponse(requestData, onBehalfOfAccessToken, navCallId)
+    val peopleDataResponse = constructPeopleDataResponse(requestData, onBehalfOfAccessToken, navCallId)
     val endBatchRequest = LocalDateTime.now()
     logger.info("Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec")
 
@@ -72,9 +69,9 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 }
 
 suspend fun constructPeopleDataResponse(
-        requestData: PeopleDataRequest,
-        accessToken: String,
-        navCallId: String,
+    requestData: PeopleDataRequest,
+    accessToken: String,
+    navCallId: String,
 ): PeopleDataResponse {
     val peopleDataResponseTotal = PeopleDataResponse(mutableMapOf())
     val numThreads = min(max(requestData.personidenter.size / 10_000, 1), 20)
@@ -110,13 +107,11 @@ suspend fun getPeopleDataResponse(
 
     for (j in threadId * batchSize until threadId * batchSize + batchSize step stepSize) {
         val end = min(j + stepSize, requestData.personidenter.size)
-        val digDirResponse =
-                getContactInfo(
-                        requestData.personidenter.slice(j until end),
-                        accessToken = accessToken,
-                        navCallId = navCallId
-                )
-                        ?: continue
+        val digDirResponse = getContactInfo(
+            requestData.personidenter.slice(j until end),
+            accessToken = accessToken,
+            navCallId = navCallId
+        ) ?: continue
         val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
         (peopleDataResponse.personer as MutableMap).putAll(filteredPeopleInfo.personer)
     }
@@ -124,9 +119,9 @@ suspend fun getPeopleDataResponse(
 }
 
 suspend fun respondCall(
-        call: ApplicationCall,
-        peopleDataResponse: PeopleDataResponse,
-        responseFormat: ResponseFormat
+    call: ApplicationCall,
+    peopleDataResponse: PeopleDataResponse,
+    responseFormat: ResponseFormat
 ) {
     if (responseFormat == ResponseFormat.CSV) {
         val startMapToCSV = LocalDateTime.now()
