@@ -11,6 +11,8 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.callloging.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import no.nav.bulk.lib.AuthConfig
+import no.nav.bulk.plugins.buildJwkProvider
 import no.nav.bulk.plugins.configureAuth
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
@@ -45,7 +47,7 @@ fun main() {
         module {
             configureRouting()
             configureHTTP()
-            configureAuth()
+            configureAuth(AuthConfig.azureADConfig)
             install(CNServer) { json() }
             install(CallLogging) {
                 level = Level.INFO
