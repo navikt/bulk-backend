@@ -135,20 +135,19 @@ fun Application.configureRouting() {
             call.respond("Ready")
         }
 
-        // Authenticate user only in production
-        if (RunEnv.ENV == "development") {
+        authenticate {
             post(personerEndpointString) {
+                logger.info("Process request")
+                val start = LocalDateTime.now()
                 personerEndpointResponse(this)
+                val end = LocalDateTime.now()
+                logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
             }
-        } else {
-            authenticate {
-                post(personerEndpointString) {
-                    logger.info("Process request")
-                    val start = LocalDateTime.now()
-                    personerEndpointResponse(this)
-                    val end = LocalDateTime.now()
-                    logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
-                }
+        }
+
+        authenticate {
+            get("/auth") {
+                call.respond(HttpStatusCode.OK)
             }
         }
     }
