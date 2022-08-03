@@ -8,11 +8,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import java.lang.Integer.max
-import java.lang.Integer.min
-import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
-import java.util.UUID
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -21,10 +16,25 @@ import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
 import no.nav.bulk.models.PeopleDataResponse
+import java.lang.Integer.max
+import java.lang.Integer.min
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
+import java.util.*
 
 enum class ResponseFormat {
     JSON,
     CSV
+}
+
+/**
+ * Function to get the correct access token (OBO of client credentials) based on environment.
+ * Returns the access token or null if anauthorized or he token was not accessable.
+ */
+fun getCorrectAccessToken(call: ApplicationCall): String? {
+    if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials()
+    val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
+    return getAccessTokenOBO(accessToken)
 }
 
 /**
@@ -35,10 +45,7 @@ enum class ResponseFormat {
  */
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
-    val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return call.respond(
-        HttpStatusCode.Unauthorized
-    )
-    val onBehalfOfAccessToken = getAccessToken(accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
+    val accessToken = getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
 
     val navCallId = call.request.headers["Nav-Call-Id"].also {
         logger.info("Forward Nav-Call-Id: $it")
@@ -60,7 +67,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 
     val responseFormat = if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
     val startBatchRequest = LocalDateTime.now()
-    val peopleDataResponse = constructPeopleDataResponse(requestData, onBehalfOfAccessToken, navCallId)
+    val peopleDataResponse = constructPeopleDataResponse(requestData, accessToken, navCallId)
     val endBatchRequest = LocalDateTime.now()
     logger.info("Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec")
 
@@ -140,15 +147,15 @@ fun Application.configureRouting() {
 
         get("/isready") { call.respond("Ready") }
 
-        authenticate {
-            post(personerEndpointString) {
-                logger.info("Process request")
-                val start = LocalDateTime.now()
-                personerEndpointResponse(this)
-                val end = LocalDateTime.now()
-                logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
-            }
+        fun postPersonerEndpoint() = post(personerEndpointString) {
+            logger.info("Process request")
+            val start = LocalDateTime.now()
+            personerEndpointResponse(this)
+            val end = LocalDateTime.now()
+            logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
         }
+        if (!RunEnv.isDevelopment()) authenticate { postPersonerEndpoint() }
+        else postPersonerEndpoint()
 
         authenticate { get("/auth") { call.respond(HttpStatusCode.OK) } }
     }

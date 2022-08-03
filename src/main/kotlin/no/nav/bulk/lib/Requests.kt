@@ -10,10 +10,10 @@ import no.nav.bulk.client
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
 import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
+import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
 import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
-import java.util.*
 
-fun getAccessToken(accessToken: String): String? {
+fun getAccessTokenOBO(accessToken: String): String {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
     val tokenClient: AzureAdOnBehalfOfTokenClient = builder
         .withClientId(AuthConfig.CLIENT_ID)
@@ -22,6 +22,17 @@ fun getAccessToken(accessToken: String): String? {
         .buildOnBehalfOfTokenClient()
 
     return tokenClient.exchangeOnBehalfOfToken(AuthConfig.SCOPE, accessToken)
+}
+
+fun getAccessTokenClientCredentials(): String? {
+    val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
+    val tokenClient: AzureAdMachineToMachineTokenClient? = builder
+        .withClientId(AuthConfig.CLIENT_ID)
+        .withPrivateJwk(AuthConfig.CLIENT_JWK)
+        .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
+        .buildMachineToMachineTokenClient()
+
+    return tokenClient?.createMachineToMachineToken(AuthConfig.SCOPE)
 }
 
 suspend fun getContactInfo(
@@ -45,6 +56,7 @@ suspend fun getContactInfo(
             is ClientRequestException,
             is ServerResponseException,
             is SerializationException -> null
+
             else -> throw e
         }
     }
