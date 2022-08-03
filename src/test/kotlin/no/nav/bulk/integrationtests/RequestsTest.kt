@@ -12,15 +12,13 @@ import io.ktor.server.util.*
 import io.ktor.util.*
 import no.nav.bulk.initializeHttpClient
 import no.nav.bulk.lib.AuthConfig
-import no.nav.bulk.lib.Endpoints
+import no.nav.bulk.lib.getAccessTokenClientCredentials
 import no.nav.bulk.lib.getContactInfo
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
-import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
-import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -79,8 +77,9 @@ class RequestsTest {
                 "1234",
                 "11111100000"
             )
-            val accessToken = getAccessToken() ?: ""
-            val response = getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
+            val accessToken = getAccessTokenClientCredentials() ?: ""
+            val response =
+                getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
 
             if (response != null) {
                 assertEquals(2, response.feil.size)
@@ -108,8 +107,9 @@ class RequestsTest {
                 "07506535861",
                 "07428827184",
             )
-            val accessToken = getAccessToken() ?: ""
-            val response = getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
+            val accessToken = getAccessTokenClientCredentials() ?: ""
+            val response =
+                getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
 
             if (response != null) {
                 assertEquals(true, response.personer.isNotEmpty())
@@ -130,7 +130,7 @@ class RequestsTest {
         try {
             initializeHttpClient()
             val time = LocalDateTime.now()
-            val tokenEndpointResponse = getAccessToken()
+            val tokenEndpointResponse = getAccessTokenClientCredentials()
             assertTrue(tokenEndpointResponse != null, "Token is not null")
 
             val decodedJwt = JWT.decode(tokenEndpointResponse)
@@ -145,15 +145,4 @@ class RequestsTest {
             throw e
         }
     }
-}
-
-fun getAccessToken(): String? {
-    val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
-    val tokenClient: AzureAdMachineToMachineTokenClient? = builder
-        .withClientId(AuthConfig.CLIENT_ID)
-        .withPrivateJwk(AuthConfig.CLIENT_JWK)
-        .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
-        .buildMachineToMachineTokenClient()
-
-    return tokenClient?.createMachineToMachineToken(AuthConfig.SCOPE)
 }
