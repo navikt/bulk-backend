@@ -7,7 +7,7 @@ val coroutinesVersion: String by project
 
 apollo {
     packageName.set("no.nav.bulk")
-    schemaFile.set(file("main/graphql/schema.graphql"))
+    schemaFile.set(file("src/main/resources/schema.graphql"))
 }
 
 plugins {
