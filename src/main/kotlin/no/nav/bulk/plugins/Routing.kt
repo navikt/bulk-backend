@@ -17,6 +17,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import no.nav.bulk.graphQlClient
+import no.nav.bulk.initializeGraphQlClient
 import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
@@ -38,7 +40,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return call.respond(
         HttpStatusCode.Unauthorized
     )
-    val onBehalfOfAccessToken = getAccessToken(accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
+    val onBehalfOfAccessToken = getAccessToken(AuthConfig.SCOPE, accessToken) ?: return call.respond(HttpStatusCode.Unauthorized)
 
     val navCallId = call.request.headers["Nav-Call-Id"].also {
         logger.info("Forward Nav-Call-Id: $it")
@@ -147,6 +149,13 @@ fun Application.configureRouting() {
                 personerEndpointResponse(this)
                 val end = LocalDateTime.now()
                 logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
+            }
+        }
+
+        authenticate {
+            post("/fkperson1") {
+                val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return@post call.respond(HttpStatusCode.Unauthorized)
+                val pdlAccessToken = getAccessToken(AuthConfig.PDL_API_SCOPE, accessToken) ?: return@post call.respond(HttpStatusCode.Unauthorized)
             }
         }
 

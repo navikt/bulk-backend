@@ -11,9 +11,8 @@ import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
 import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
-import java.util.*
 
-fun getAccessToken(accessToken: String): String? {
+fun getAccessToken(scope: String, accessToken: String): String? {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
     val tokenClient: AzureAdOnBehalfOfTokenClient = builder
         .withClientId(AuthConfig.CLIENT_ID)
@@ -21,7 +20,7 @@ fun getAccessToken(accessToken: String): String? {
         .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
         .buildOnBehalfOfTokenClient()
 
-    return tokenClient.exchangeOnBehalfOfToken(AuthConfig.SCOPE, accessToken)
+    return tokenClient.exchangeOnBehalfOfToken(scope, accessToken)
 }
 
 suspend fun getContactInfo(
@@ -52,4 +51,8 @@ suspend fun getContactInfo(
     return if (res.status.isSuccess())
         res.body()
     else null
+}
+
+suspend fun transformFkPerson1ToPnrs(fkpnrs1: List<String>, accessToken: String) {
+
 }
