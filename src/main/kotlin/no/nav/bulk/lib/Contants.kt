@@ -10,10 +10,10 @@ val dotenv = dotenv {
 
 object RunEnv {
     val ENV = dotenv["ENVIRONMENT"] ?: "production"
+    fun isDevelopment() = ENV == "development"
+    fun isProduction() = ENV == "production"
+    fun isPreproduction() = ENV == "preproduction"
 }
-
-fun RunEnv.isDevelopment() = ENV == "development"
-fun RunEnv.isProduction() = ENV == "production"
 
 object AuthConfig {
     const val SCOPE = "api://dev-gcp.team-rocket.digdir-krr-proxy/.default"
