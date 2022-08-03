@@ -13,55 +13,55 @@ import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
 import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
 
-fun getAccessTokenOBO(accessToken: String): String {
+fun getAccessTokenOBO(scope: String, accessToken: String): String? {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
-    val tokenClient: AzureAdOnBehalfOfTokenClient = builder
-        .withClientId(AuthConfig.CLIENT_ID)
-        .withPrivateJwk(AuthConfig.CLIENT_JWK)
-        .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
-        .buildOnBehalfOfTokenClient()
+    val tokenClient: AzureAdOnBehalfOfTokenClient =
+            builder.withClientId(AuthConfig.CLIENT_ID)
+                    .withPrivateJwk(AuthConfig.CLIENT_JWK)
+                    .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
+                    .buildOnBehalfOfTokenClient()
 
-    return tokenClient.exchangeOnBehalfOfToken(AuthConfig.SCOPE, accessToken)
+    return tokenClient.exchangeOnBehalfOfToken(scope, accessToken)
 }
 
 fun getAccessTokenClientCredentials(): String? {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
-    val tokenClient: AzureAdMachineToMachineTokenClient? = builder
-        .withClientId(AuthConfig.CLIENT_ID)
-        .withPrivateJwk(AuthConfig.CLIENT_JWK)
-        .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
-        .buildMachineToMachineTokenClient()
+    val tokenClient: AzureAdMachineToMachineTokenClient? =
+            builder.withClientId(AuthConfig.CLIENT_ID)
+                    .withPrivateJwk(AuthConfig.CLIENT_JWK)
+                    .withTokenEndpointUrl(Endpoints.TOKEN_ENDPOINT)
+                    .buildMachineToMachineTokenClient()
 
     return tokenClient?.createMachineToMachineToken(AuthConfig.SCOPE)
 }
 
 suspend fun getContactInfo(
-    personnr: List<String>,
-    clientArg: HttpClient? = null,
-    accessToken: String,
-    navCallId: String
+        personnr: List<String>,
+        clientArg: HttpClient? = null,
+        accessToken: String,
+        navCallId: String
 ): DigDirResponse? {
     val localClient = clientArg ?: client
-    val res = try {
-        localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
-            headers {
-                append(HttpHeaders.Authorization, "Bearer $accessToken")
-                append("Nav-Call-Id", navCallId)
+    val res =
+            try {
+                localClient.post(Endpoints.DIGDIR_KRR_API_URL) {
+                    headers {
+                        append(HttpHeaders.Authorization, "Bearer $accessToken")
+                        append("Nav-Call-Id", navCallId)
+                    }
+                    contentType(ContentType.Application.Json)
+                    setBody(DigDirRequest(personnr))
+                }
+            } catch (e: Exception) {
+                return when (e) {
+                    is ClientRequestException,
+                    is ServerResponseException,
+                    is SerializationException -> null
+                    else -> throw e
+                }
             }
-            contentType(ContentType.Application.Json)
-            setBody(DigDirRequest(personnr))
-        }
-    } catch (e: Exception) {
-        return when (e) {
-            is ClientRequestException,
-            is ServerResponseException,
-            is SerializationException -> null
 
-            else -> throw e
-        }
-    }
-
-    return if (res.status.isSuccess())
-        res.body()
-    else null
+    return if (res.status.isSuccess()) res.body() else null
 }
+
+suspend fun transformFkPerson1ToPnrs(fkpnrs1: List<String>, accessToken: String) {}
