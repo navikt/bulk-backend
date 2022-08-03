@@ -4,11 +4,7 @@ val logbackVersion: String by project
 val junitJupiterVersion: String by project
 val mockOAuth2ServerVersion: String by project
 val coroutinesVersion: String by project
-
-apollo {
-    packageName.set("no.nav.bulk")
-    schemaFile.set(file("src/main/resources/schema.graphql"))
-}
+val latestGraphQLKotlinVersion: String by project
 
 plugins {
     application

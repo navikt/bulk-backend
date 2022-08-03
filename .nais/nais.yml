@@ -15,6 +15,9 @@ spec:
     inbound:
       rules:
         - application: bulk-frontend
+    outbound:
+      external:
+        - host: pdl-api.dev-fss-pub.nais.io
   strategy:
     type: Recreate
   liveness:

@@ -184,6 +184,8 @@ fun Application.configureRouting() {
                 val pdlAccessToken =
                         getAccessToken(AuthConfig.PDL_API_SCOPE, accessToken)
                                 ?: return@post call.respond(HttpStatusCode.Unauthorized)
+                getPnrsNames(accessToken = pdlAccessToken)
+                println(pdlAccessToken)
             }
         }
 

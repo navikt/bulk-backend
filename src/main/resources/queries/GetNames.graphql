@@ -6,7 +6,7 @@ query($identer: [ID!]!) {
                 fornavn
                 mellomnavn
                 etternavn
-                forkortetnavn
+                forkortetNavn
             }
         },
         code
