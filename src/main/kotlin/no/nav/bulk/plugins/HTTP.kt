@@ -12,7 +12,6 @@ import io.ktor.server.plugins.defaultheaders.*
 import io.ktor.server.plugins.partialcontent.*
 import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.RunEnv
-import no.nav.bulk.lib.isProduction
 import no.nav.bulk.logger
 import no.nav.bulk.models.AzureAdOpenIdConfiguration
 import java.net.URL
@@ -69,9 +68,12 @@ fun Application.configureAuth(azureAdConfig: AzureAdOpenIdConfiguration) {
                         logger.error("Auth: Valid audience not found in claims: '${credentials.payload.audience}' != '${AuthConfig.CLIENT_ID}'")
                     }
 
-                    val authorizedGroup = if (RunEnv.isProduction()) AuthConfig.TEAM_BULK_GROUP_ID_PROD else AuthConfig.TEAM_BULK_GROUP_ID_DEV
+                    val authorizedGroup =
+                        if (RunEnv.isProduction()) AuthConfig.TEAM_BULK_GROUP_ID_PROD else AuthConfig.TEAM_BULK_GROUP_ID_DEV
 
-                    require(credentials.payload.getClaim("groups").`asList`(String::class.java).contains(authorizedGroup)) {
+                    require(
+                        credentials.payload.getClaim("groups").asList(String::class.java).contains(authorizedGroup)
+                    ) {
                         logger.error("Auth: Valid group not found in claims: ${credentials.payload.getClaim("groups")} != [${AuthConfig.TEAM_BULK_GROUP_ID_PROD}, ${AuthConfig.TEAM_BULK_GROUP_ID_DEV}]")
                     }
 
@@ -88,12 +90,9 @@ fun Application.configureAuth(azureAdConfig: AzureAdOpenIdConfiguration) {
 
 fun buildJwkProvider(jwkProviderUrl: String): JwkProvider {
     // https://github.com/nais/examples/blob/main/sec-blueprints/service-to-service/api-onbehalfof-ktor/src/main/kotlin/no/nav/security/examples/ProtectedOnBehalfOfApp.kt
-    return JwkProviderBuilder(URL(jwkProviderUrl))
-        .cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
+    return JwkProviderBuilder(URL(jwkProviderUrl)).cached(10, 24, TimeUnit.HOURS) // cache up to 10 JWKs for 24 hours
         .rateLimited(
-            10,
-            1,
-            TimeUnit.MINUTES
+            10, 1, TimeUnit.MINUTES
         ) // if not cached, only allow max 10 different keys per minute to be fetched from external provider
         .build()
 }
