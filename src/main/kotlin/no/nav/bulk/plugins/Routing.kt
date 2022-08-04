@@ -55,12 +55,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     val call = pipelineContext.call
     val accessToken =
         getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
-
-    val navCallId =
-        call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") }
-            ?: UUID.randomUUID().toString().also {
-                logger.info("Create new Nav-Call-Id: $it")
-            }
+    val navCallId = getNavCallId(call)
 
     val requestData: PeopleDataRequest
     val startCallReceive = LocalDateTime.now()
@@ -185,18 +180,26 @@ fun Application.configureRouting() {
 
         authenticate {
             post("/navn") {
+                val requestData: PeopleDataRequest
+                try {
+                    requestData = call.receive()
+                } catch (e: CannotTransformContentToTypeException) {
+                    return@post call.respond(HttpStatusCode.BadRequest)
+                }
                 val accessToken = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE) ?: return@post call.respond(
                     HttpStatusCode.Unauthorized
                 )
+                val navCallId = getNavCallId(call)
                 val client =
                     GraphQLKtorClient(
                         url = URL(Endpoints.PDL_API_URL),
                         serializer = GraphQLClientKotlinxSerializer()
                     )
-                val pdlNavnQuery = PdlNavnQuery(PdlNavnQuery.Variables(listOf("11817798936")))
+                val pdlNavnQuery = PdlNavnQuery(PdlNavnQuery.Variables(requestData.personidenter))
                 val result: GraphQLClientResponse<PdlNavnQuery.Result> =
                     client.execute(pdlNavnQuery) {
                         header(HttpHeaders.Authorization, "Bearer $accessToken")
+                        header("Nav-Call-Id", navCallId)
                         header("Tema", "GEN")
                     }
                 if (result.data == null) {
@@ -210,4 +213,9 @@ fun Application.configureRouting() {
 
         authenticate { get("/auth") { call.respond(HttpStatusCode.OK) } }
     }
+}
+
+fun getNavCallId(call: ApplicationCall): String {
+    return call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") }
+        ?: UUID.randomUUID().toString().also { logger.info("Create new Nav-Call-Id: $it") }
 }
