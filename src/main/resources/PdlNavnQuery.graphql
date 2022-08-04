@@ -1,6 +1,6 @@
 query PdlNavnQuery($identer: [ID!]!) {
     hentPersonBolk(identer: $identer) {
-        ident,
+        ident
         person {
             navn {
                 fornavn

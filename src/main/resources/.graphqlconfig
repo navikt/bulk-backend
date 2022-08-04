@@ -1,6 +1,6 @@
 {
   "name": "pdl-api",
-  "schemaPath": "pdl-api-schema.graphql",
+  "schemaPath": "build/schema.graphql",
   "extensions": {
     "endpoints": {
       "PDL GraphQL Endpoint": {
@@ -8,7 +8,7 @@
         "headers": {
           "user-agent": "bulk-backend"
         },
-        "introspect": false
+        "introspect": true
       }
     }
   }
