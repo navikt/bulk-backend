@@ -1,4 +1,4 @@
-query($identer: [ID!]!) {
+query PdlNavnQuery($identer: [ID!]!) {
     hentPersonBolk(identer: $identer) {
         ident,
         person {
@@ -8,7 +8,7 @@ query($identer: [ID!]!) {
                 etternavn
                 forkortetNavn
             }
-        },
-        code
+        }
+        , code
     }
 }

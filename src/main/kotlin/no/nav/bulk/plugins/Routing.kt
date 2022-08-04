@@ -1,5 +1,8 @@
 package no.nav.bulk.plugins
 
+import com.expediagroup.graphql.client.ktor.GraphQLKtorClient
+import com.expediagroup.graphql.client.serialization.GraphQLClientKotlinxSerializer
+import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -17,10 +20,13 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import no.nav.bulk.client
+import no.nav.bulk.generated.PdlNavnQuery
 import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
 import no.nav.bulk.models.PeopleDataResponse
+import java.net.URL
 
 enum class ResponseFormat {
     JSON,
@@ -32,10 +38,10 @@ enum class ResponseFormat {
  * Returns the access token or null if anauthorized or he token was not accessable.
  */
 fun getCorrectAccessToken(call: ApplicationCall): String? {
-    if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials()
+    if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials(AuthConfig.SCOPE)
     val accessToken =
-            call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
-    return getAccessTokenOBO(accessToken)
+        call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
+    return getAccessTokenOBO(AuthConfig.SCOPE, accessToken)
 }
 
 /**
@@ -47,13 +53,13 @@ fun getCorrectAccessToken(call: ApplicationCall): String? {
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
     val accessToken =
-            getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
+        getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
 
     val navCallId =
-            call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") }
-                    ?: UUID.randomUUID().toString().also {
-                        logger.info("Create new Nav-Call-Id: $it")
-                    }
+        call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") }
+            ?: UUID.randomUUID().toString().also {
+                logger.info("Create new Nav-Call-Id: $it")
+            }
 
     val requestData: PeopleDataRequest
     val startCallReceive = LocalDateTime.now()
@@ -64,19 +70,19 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     }
     val endCallReceive = LocalDateTime.now()
     logger.info(
-            "Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)}ms"
+        "Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)}ms"
     )
 
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
 
     val responseFormat =
-            if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
-            else ResponseFormat.JSON
+        if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
+        else ResponseFormat.JSON
     val startBatchRequest = LocalDateTime.now()
     val peopleDataResponse = constructPeopleDataResponse(requestData, accessToken, navCallId)
     val endBatchRequest = LocalDateTime.now()
     logger.info(
-            "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
+        "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
     )
 
     // At this stage, all the communication with DigDir is done
@@ -84,9 +90,9 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 }
 
 suspend fun constructPeopleDataResponse(
-        requestData: PeopleDataRequest,
-        accessToken: String,
-        navCallId: String,
+    requestData: PeopleDataRequest,
+    accessToken: String,
+    navCallId: String,
 ): PeopleDataResponse {
     val peopleDataResponseTotal = PeopleDataResponse(mutableMapOf())
     val numThreads = min(max(requestData.personidenter.size / 10_000, 1), 20)
@@ -98,11 +104,11 @@ suspend fun constructPeopleDataResponse(
             for (i in 0 until numThreads) {
                 val deferred = async {
                     getPeopleDataResponse(
-                            requestData,
-                            accessToken,
-                            navCallId,
-                            i,
-                            batchSizeForThreads
+                        requestData,
+                        accessToken,
+                        navCallId,
+                        i,
+                        batchSizeForThreads
                     )
                 }
                 deferredMutableList.add(deferred)
@@ -117,11 +123,11 @@ suspend fun constructPeopleDataResponse(
 }
 
 suspend fun getPeopleDataResponse(
-        requestData: PeopleDataRequest,
-        accessToken: String,
-        navCallId: String,
-        threadId: Int,
-        batchSize: Int
+    requestData: PeopleDataRequest,
+    accessToken: String,
+    navCallId: String,
+    threadId: Int,
+    batchSize: Int
 ): PeopleDataResponse {
     val peopleDataResponse = PeopleDataResponse(mutableMapOf())
     val stepSize = 500
@@ -129,12 +135,12 @@ suspend fun getPeopleDataResponse(
     for (j in threadId * batchSize until threadId * batchSize + batchSize step stepSize) {
         val end = min(j + stepSize, requestData.personidenter.size)
         val digDirResponse =
-                getContactInfo(
-                        requestData.personidenter.slice(j until end),
-                        accessToken = accessToken,
-                        navCallId = navCallId
-                )
-                        ?: continue
+            getContactInfo(
+                requestData.personidenter.slice(j until end),
+                accessToken = accessToken,
+                navCallId = navCallId
+            )
+                ?: continue
         val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
         (peopleDataResponse.personer as MutableMap).putAll(filteredPeopleInfo.personer)
     }
@@ -142,16 +148,16 @@ suspend fun getPeopleDataResponse(
 }
 
 suspend fun respondCall(
-        call: ApplicationCall,
-        peopleDataResponse: PeopleDataResponse,
-        responseFormat: ResponseFormat
+    call: ApplicationCall,
+    peopleDataResponse: PeopleDataResponse,
+    responseFormat: ResponseFormat
 ) {
     if (responseFormat == ResponseFormat.CSV) {
         val startMapToCSV = LocalDateTime.now()
         val peopleCSV = mapToCSV(peopleDataResponse)
         val endMapToCSV = LocalDateTime.now()
         logger.info(
-                "Time mapping to CSV: ${startMapToCSV.until(endMapToCSV, ChronoUnit.MILLIS)} ms"
+            "Time mapping to CSV: ${startMapToCSV.until(endMapToCSV, ChronoUnit.MILLIS)} ms"
         )
         call.respondText(peopleCSV)
     } else call.respond(peopleDataResponse)
@@ -166,26 +172,36 @@ fun Application.configureRouting() {
         get("/isready") { call.respond("Ready") }
 
         fun postPersonerEndpoint() =
-                post(personerEndpointString) {
-                    logger.info("Process request")
-                    val start = LocalDateTime.now()
-                    personerEndpointResponse(this)
-                    val end = LocalDateTime.now()
-                    logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
-                }
+            post(personerEndpointString) {
+                logger.info("Process request")
+                val start = LocalDateTime.now()
+                personerEndpointResponse(this)
+                val end = LocalDateTime.now()
+                logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
+            }
         if (!RunEnv.isDevelopment()) authenticate { postPersonerEndpoint() }
         else postPersonerEndpoint()
 
         authenticate {
             post("/fkperson1") {
-                val accessToken =
-                        call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ")
-                                ?: return@post call.respond(HttpStatusCode.Unauthorized)
-                val pdlAccessToken =
-                        getAccessToken(AuthConfig.PDL_API_SCOPE, accessToken)
-                                ?: return@post call.respond(HttpStatusCode.Unauthorized)
-                getPnrsNames(accessToken = pdlAccessToken)
-                println(pdlAccessToken)
+                val accessToken = getAccessTokenClientCredentials(AuthConfig.SCOPE) ?: return@post call.respond(HttpStatusCode.Unauthorized)
+                val client =
+                    GraphQLKtorClient(
+                        url = URL(Endpoints.PDL_API_URL),
+                        httpClient = client,
+                        serializer = GraphQLClientKotlinxSerializer()
+                    )
+                val pdlNavnQuery = PdlNavnQuery(PdlNavnQuery.Variables(listOf("11817798936")))
+                try {
+                    val result =
+                        client.execute(pdlNavnQuery) {
+                            header(HttpHeaders.Authorization, "Bearer $accessToken")
+                        }
+                    println("${result.data}")
+                } catch (e: Exception) {
+                    logger.error(e.stackTraceToString())
+                }
+                call.respond(HttpStatusCode.OK)
             }
         }
 

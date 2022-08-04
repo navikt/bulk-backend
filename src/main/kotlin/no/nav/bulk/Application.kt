@@ -1,6 +1,5 @@
 package no.nav.bulk
 
-import com.apollographql.apollo3.ApolloClient
 import com.typesafe.config.ConfigFactory
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -13,8 +12,6 @@ import io.ktor.server.plugins.callloging.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import no.nav.bulk.lib.AuthConfig
-import no.nav.bulk.lib.Endpoints
-import no.nav.bulk.plugins.buildJwkProvider
 import no.nav.bulk.plugins.configureAuth
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
@@ -39,21 +36,11 @@ fun initializeHttpClient() = runBlocking {
     client = newClient
 }
 
-lateinit var graphQlClient: ApolloClient
-
-fun initializeGraphQlClient(){
-    val newApolloClient = ApolloClient.Builder()
-        .serverUrl(Endpoints.PDL_API_URL)
-        .build()
-    graphQlClient = newApolloClient
-}
-
 val logger: Logger = LoggerFactory.getLogger("no.nav.bulk")
 
 fun main() {
     System.setProperty("org.slf4j.simpleLogger.logFile", "System.out")
     initializeHttpClient()
-    initializeGraphQlClient()
     val env = applicationEngineEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load())
         module {
