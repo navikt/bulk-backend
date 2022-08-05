@@ -9,7 +9,7 @@ val dotenv = dotenv {
 }
 
 object RunEnv {
-    val ENV = dotenv["ENVIRONMENT"] ?: "production"
+    private val ENV = dotenv["ENVIRONMENT"] ?: "production"
     fun isDevelopment() = ENV == "development"
     fun isProduction() = ENV == "production"
     fun isPreproduction() = ENV == "preproduction"

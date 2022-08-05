@@ -29,7 +29,7 @@ enum class ResponseFormat {
 
 /**
  * Function to get the correct access token (OBO of client credentials) based on environment.
- * Returns the access token or null if anauthorized or he token was not accessable.
+ * Returns the access token or null if unauthorized or the token was not accessible.
  */
 fun getCorrectAccessToken(call: ApplicationCall): String? {
     if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials(AuthConfig.SCOPE)
@@ -123,13 +123,11 @@ suspend fun getPeopleDataResponse(
 
     for (j in threadId * batchSize until threadId * batchSize + batchSize step stepSize) {
         val end = min(j + stepSize, requestData.personidenter.size)
-        val digDirResponse =
-            getContactInfo(
-                requestData.personidenter.slice(j until end),
-                accessToken = accessToken,
-                navCallId = navCallId
-            )
-                ?: continue
+        val digDirResponse = getContactInfo(
+            requestData.personidenter.slice(j until end),
+            accessToken = accessToken,
+            navCallId = navCallId
+        ) ?: continue
         val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
         (peopleDataResponse.personer as MutableMap).putAll(filteredPeopleInfo.personer)
     }
