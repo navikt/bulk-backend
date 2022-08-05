@@ -1,7 +1,6 @@
 package no.nav.bulk.lib
 
 import com.expediagroup.graphql.client.ktor.GraphQLKtorClient
-import com.expediagroup.graphql.client.serialization.GraphQLClientKotlinxSerializer
 import com.expediagroup.graphql.client.types.GraphQLClientResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -14,10 +13,10 @@ import no.nav.bulk.generated.PdlQuery
 import no.nav.bulk.logger
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
+import no.nav.bulk.models.PDLResponse
 import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
 import no.nav.common.token_client.client.AzureAdOnBehalfOfTokenClient
-import java.net.URL
 
 fun getAccessTokenOBO(scope: String, accessToken: String): String? {
     val builder: AzureAdTokenClientBuilder = AzureAdTokenClientBuilder.builder()
@@ -73,24 +72,26 @@ suspend fun getContactInfo(
 }
 
 // TODO: Change return type from null to actual error codes
-suspend fun getPnrsNames(identer: List<String>): PdlQuery.Result? {
-    val accessToken = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE) ?: return null
+suspend fun getPDLInfo(identer: List<String>, accessToken: String, graphQLKtorClient: GraphQLKtorClient): PDLResponse? {
+    //val accessToken = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE) ?: return null
     println(accessToken)
-    val client = GraphQLKtorClient(
+    /*val client = GraphQLKtorClient(
         url = URL(Endpoints.PDL_API_URL),
         serializer = GraphQLClientKotlinxSerializer()
-    )
-
+    )*/
     val pdlQuery = PdlQuery(PdlQuery.Variables(identer))
-    val result: GraphQLClientResponse<PdlQuery.Result> = client.execute(pdlQuery) {
+    val result: GraphQLClientResponse<PdlQuery.Result> = graphQLKtorClient.execute(pdlQuery) {
         header(HttpHeaders.Authorization, "Bearer $accessToken")
         header("Tema", "GEN")
     }
-
     return if (result.data == null) {
         logger.error("Error in GraphQL query: ${result.errors?.joinToString { it.message }}")
         null
     } else {
-        result.data
+        result.data!!.mapPersonBolkResultToPDLResponse()
     }
+}
+
+fun PdlQuery.Result.mapPersonBolkResultToPDLResponse(): PDLResponse {
+    return hentPersonBolk.associateBy({ it.ident }, { it.person })
 }

@@ -12,7 +12,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-//import no.nav.bulk.generated.PdlQuery
+import no.nav.bulk.generated.PdlQuery
 import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
@@ -130,6 +130,10 @@ suspend fun constructPeopleDataResponse(
     return peopleDataResponseTotal
 }
 
+suspend fun constructPDLResponse() {
+
+}
+
 suspend fun getPeopleDataResponse(
     requestData: PeopleDataRequest,
     accessToken: String,
@@ -194,8 +198,8 @@ fun Application.configureRouting() {
             } catch (e: CannotTransformContentToTypeException) {
                 return@post call.respond(HttpStatusCode.BadRequest)
             }
-            val res = getPnrsNames(requestData.personidenter)
-            if (res != null) call.respond(res) else call.respond(500)
+            //val res = getPDLInfo(requestData.personidenter)
+            //if (res != null) call.respond(res) else call.respond(500)
         }
 
         if (!RunEnv.isDevelopment()) authenticate { pdlEndpointRequest() } else pdlEndpointRequest()
