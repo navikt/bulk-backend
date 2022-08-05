@@ -1,8 +1,9 @@
 package no.nav.bulk.lib
 
+import no.nav.bulk.models.PDLResponse
 import no.nav.bulk.models.PeopleDataResponse
 
-fun mapToCSV(peopleData: PeopleDataResponse): String {
+fun mapToCSV(peopleData: PeopleDataResponse, pdlResponse: PDLResponse? = null): String {
     val p = StringBuilder()
     p.append("Personident,Språk,E-post,Mobilnummer,Adresse,Feil")
     for ((personident, personData) in peopleData.personer) {
