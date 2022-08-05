@@ -15,6 +15,7 @@ import no.nav.bulk.logger
 import no.nav.bulk.models.PDLResponse
 import no.nav.bulk.models.PeopleDataRequest
 import no.nav.bulk.models.PeopleDataResponse
+import no.nav.bulk.models.PersonData
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.time.LocalDateTime
@@ -22,18 +23,16 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 enum class ResponseFormat {
-    JSON,
-    CSV
+    JSON, CSV
 }
 
 /**
- * Function to get the correct access token (OBO of client credentials) based on environment.
+ * Function to get the correct access token (OBO of lient credentials) based on environment.
  * Returns the access token or null if unauthorized or the token was not accessible.
  */
 fun getCorrectAccessToken(call: ApplicationCall): String? {
     if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials(AuthConfig.SCOPE)
-    val accessToken =
-        call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
+    val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
     return getAccessTokenOBO(AuthConfig.SCOPE, accessToken)
 }
 
@@ -46,11 +45,12 @@ fun getCorrectAccessToken(call: ApplicationCall): String? {
 // TODO: Make application able to respond to JSON and also include PDL. Create a function to take two responses and merge into one generic map that can be serialized to JSON
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
-    val accessTokenKRR =
-        getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
-    val navCallId = getNavCallId(call)
+    val responseFormat = if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
+    val includePdl = call.request.queryParameters["pdl"].toBoolean()
+    val accessTokenKRR = getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
     val accessTokenPDL = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE)
         ?: return call.respond(HttpStatusCode.InternalServerError)
+    val navCallId = getNavCallId(call)
 
     val requestData: PeopleDataRequest
     val startCallReceive = LocalDateTime.now()
@@ -65,10 +65,6 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     )
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
 
-    val responseFormat =
-        if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
-        else ResponseFormat.JSON
-    val includePdl = call.request.queryParameters["pdl"].toBoolean()
     if (includePdl && responseFormat == ResponseFormat.JSON) call.respond(
         HttpStatusCode.BadRequest,
         "Cannot include PDL data and respond with JSON. Change respond type to CSV or do not include PDL in query parameters."
@@ -80,7 +76,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 
     runBlocking {
         launch {
-            peopleDataResponse = constructPeopleDataResponse(requestData, accessTokenKRR, navCallId)
+            peopleDataResponse = constructPeopleDataResponse(requestData.personidenter, accessTokenKRR, navCallId)
         }
         if (includePdl && responseFormat == ResponseFormat.CSV) {
             launch {
@@ -97,54 +93,45 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
 }
 
 suspend fun constructPeopleDataResponse(
-    requestData: PeopleDataRequest,
+    identer: List<String>,
+    accessToken: String,
+    navCallId: String
+): PeopleDataResponse =
+    PeopleDataResponse(
+        performBulkRequestsInParallel(
+            identer,
+            accessToken,
+            navCallId,
+            ::getPeopleDataResponse
+        )
+    )
+
+suspend fun constructPDLResponse(identer: List<String>, accessToken: String): PDLResponse =
+    performBulkRequestsInParallel(
+        identer,
+        accessToken,
+        navCallId = "", // Don't care about navCallId here
+        reqFunc = ::getPDLResponse,
+    )
+
+suspend fun <Value> performBulkRequestsInParallel(
+    identer: List<String>,
     accessToken: String,
     navCallId: String,
-): PeopleDataResponse {
-    val peopleDataResponseTotal = PeopleDataResponse(mutableMapOf())
-    val numThreads = min(max(requestData.personidenter.size / 10_000, 1), 20)
-    val batchSizeForThreads = requestData.personidenter.size / numThreads
-    val deferredMutableList = mutableListOf<Deferred<PeopleDataResponse>>()
+    reqFunc: suspend (identer: List<String>, accessToken: String, threadNr: Int, threadBatchSize: Int, navCallId: String) -> Map<String, Value>
 
-    coroutineScope {
-        launch {
-            for (i in 0 until numThreads) {
-                val deferred = async {
-                    getPeopleDataResponse(
-                        requestData,
-                        accessToken,
-                        navCallId,
-                        i,
-                        batchSizeForThreads
-                    )
-                }
-                deferredMutableList.add(deferred)
-            }
-        }
-    }
-    for (deferred in deferredMutableList) {
-        val peopleDataResponse = deferred.await()
-        (peopleDataResponseTotal.personer as MutableMap).putAll(peopleDataResponse.personer)
-    }
-    return peopleDataResponseTotal
-}
-
-suspend fun constructPDLResponse(identer: List<String>, accessToken: String)
-    : PDLResponse {
-    val pdlResponseTotal = mutableMapOf<String, Person?>()
+): Map<String, Value> {
+    val valueMap = mutableMapOf<String, Value>()
     val numThreads = min(max(identer.size / 10_000, 1), 20)
     val batchSizeForThreads = identer.size / numThreads
-    val deferredMutableList = mutableListOf<Deferred<PDLResponse>>()
+    val deferredMutableList = mutableListOf<Deferred<Map<String, Value>>>()
 
     coroutineScope {
         launch {
             for (i in 0 until numThreads) {
                 val deferred = async {
-                    getPDLResponse(
-                        identer,
-                        accessToken,
-                        i,
-                        batchSizeForThreads
+                    reqFunc(
+                        identer, accessToken, i, batchSizeForThreads, navCallId
                     )
                 }
                 deferredMutableList.add(deferred)
@@ -152,17 +139,18 @@ suspend fun constructPDLResponse(identer: List<String>, accessToken: String)
         }
     }
     for (deferred in deferredMutableList) {
-        val pdlResponse = deferred.await()
-        pdlResponseTotal.putAll(pdlResponse)
+        val value = deferred.await()
+        valueMap.putAll(value)
     }
-    return pdlResponseTotal
+    return valueMap
 }
 
 suspend fun getPDLResponse(
     identer: List<String>,
     accessToken: String,
     threadNr: Int,
-    batchSize: Int
+    batchSize: Int,
+    @Suppress("UNUSED_PARAMETER") navCallId: String
 ): PDLResponse {
     val pdlResponseTotal = mutableMapOf<String, Person?>()
     val stepSize = 100
@@ -170,8 +158,7 @@ suspend fun getPDLResponse(
     for (j in threadNr * batchSize until threadNr * batchSize + batchSize step stepSize) {
         val end = min(j + stepSize, identer.size)
         val pdlResponse = getPDLInfo(
-            identer.slice(j until end),
-            accessToken = accessToken
+            identer.slice(j until end), accessToken = accessToken
         ) ?: continue
         pdlResponseTotal.putAll(pdlResponse)
     }
@@ -179,26 +166,20 @@ suspend fun getPDLResponse(
 }
 
 suspend fun getPeopleDataResponse(
-    requestData: PeopleDataRequest,
-    accessToken: String,
-    navCallId: String,
-    threadNr: Int,
-    batchSize: Int
-): PeopleDataResponse {
+    identer: List<String>, accessToken: String, threadNr: Int, batchSize: Int, navCallId: String,
+): Map<String, PersonData> {
     val peopleDataResponse = PeopleDataResponse(mutableMapOf())
     val stepSize = 500
 
     for (j in threadNr * batchSize until threadNr * batchSize + batchSize step stepSize) {
-        val end = min(j + stepSize, requestData.personidenter.size)
+        val end = min(j + stepSize, identer.size)
         val digDirResponse = getContactInfo(
-            requestData.personidenter.slice(j until end),
-            accessToken = accessToken,
-            navCallId = navCallId
+            identer.slice(j until end), accessToken = accessToken, navCallId = navCallId
         ) ?: continue
         val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
         (peopleDataResponse.personer as MutableMap).putAll(filteredPeopleInfo.personer)
     }
-    return peopleDataResponse
+    return peopleDataResponse.personer
 }
 
 suspend fun respondCall(
@@ -254,6 +235,6 @@ fun Application.configureRouting() {
 }
 
 fun getNavCallId(call: ApplicationCall): String {
-    return call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") }
-        ?: UUID.randomUUID().toString().also { logger.info("Create new Nav-Call-Id: $it") }
+    return call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") } ?: UUID.randomUUID()
+        .toString().also { logger.info("Create new Nav-Call-Id: $it") }
 }
