@@ -1,5 +1,7 @@
 package no.nav.bulk
 
+import com.expediagroup.graphql.client.ktor.GraphQLKtorClient
+import com.expediagroup.graphql.client.serialization.GraphQLClientKotlinxSerializer
 import com.typesafe.config.ConfigFactory
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -12,16 +14,19 @@ import io.ktor.server.plugins.callloging.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import no.nav.bulk.lib.AuthConfig
+import no.nav.bulk.lib.Endpoints
 import no.nav.bulk.plugins.configureAuth
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.event.Level
+import java.net.URL
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as CNServer
 
 lateinit var client: HttpClient
+val gqlClient = GraphQLKtorClient(url = URL(Endpoints.PDL_API_URL), serializer = GraphQLClientKotlinxSerializer())
 
 fun initializeHttpClient() = runBlocking {
     val newClient = HttpClient(CIO) {
