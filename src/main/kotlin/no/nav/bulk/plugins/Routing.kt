@@ -12,6 +12,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+//import no.nav.bulk.generated.PdlQuery
 import no.nav.bulk.lib.*
 import no.nav.bulk.logger
 import no.nav.bulk.models.PeopleDataRequest
@@ -59,7 +60,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     }
     val endCallReceive = LocalDateTime.now()
     logger.info(
-        "Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)}ms"
+        "Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)} ms"
     )
 
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
@@ -67,8 +68,26 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     val responseFormat =
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
         else ResponseFormat.JSON
+    val includePdl = call.request.queryParameters["pdl"].toBoolean()
+    // TODO: Make application able to respond to JSON and also include PDL. Create a function to take two responses and merge into one generic map that can be serialized to JSON
+    if (includePdl && responseFormat == ResponseFormat.JSON) call.respond(
+        HttpStatusCode.BadRequest,
+        "Cannot include PDL data and respond with JSON. Change respond type to CSV or do not include PDL in query parameters.")
+
     val startBatchRequest = LocalDateTime.now()
-    val peopleDataResponse = constructPeopleDataResponse(requestData, accessToken, navCallId)
+    lateinit var peopleDataResponse: PeopleDataResponse
+//    lateinit var pdlResponse: PdlQuery.Result
+
+    coroutineScope {
+        launch {
+            peopleDataResponse = constructPeopleDataResponse(requestData, accessToken, navCallId)
+        }
+        if (includePdl && responseFormat == ResponseFormat.CSV) {
+            launch {
+                //pdlResponse = getPnrsNames()
+            }
+        }
+    }
     val endBatchRequest = LocalDateTime.now()
     logger.info(
         "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
@@ -151,21 +170,18 @@ suspend fun respondCall(
 }
 
 fun Application.configureRouting() {
-    val personerEndpointString = "/personer"
-
     routing {
         get("/isalive") { call.respond("Alive") }
 
         get("/isready") { call.respond("Ready") }
 
-        fun postPersonerEndpoint() =
-            post(personerEndpointString) {
-                logger.info("Process request")
-                val start = LocalDateTime.now()
-                personerEndpointResponse(this)
-                val end = LocalDateTime.now()
-                logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
-            }
+        fun postPersonerEndpoint() = post("/personer") {
+            logger.info("Process request")
+            val start = LocalDateTime.now()
+            personerEndpointResponse(this)
+            val end = LocalDateTime.now()
+            logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
+        }
 
         if (!RunEnv.isDevelopment()) authenticate { postPersonerEndpoint() }
         else postPersonerEndpoint()

@@ -10,7 +10,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.SerializationException
 import no.nav.bulk.client
-import no.nav.bulk.generated.PdlNavnQuery
+import no.nav.bulk.generated.PdlQuery
 import no.nav.bulk.logger
 import no.nav.bulk.models.DigDirRequest
 import no.nav.bulk.models.DigDirResponse
@@ -73,26 +73,24 @@ suspend fun getContactInfo(
 }
 
 // TODO: Change return type from null to actual error codes
-suspend fun getPnrsNames(identer: List<String>): PdlNavnQuery.Result? {
+suspend fun getPnrsNames(identer: List<String>): PdlQuery.Result? {
     val accessToken = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE) ?: return null
     println(accessToken)
     val client = GraphQLKtorClient(
         url = URL(Endpoints.PDL_API_URL),
         serializer = GraphQLClientKotlinxSerializer()
     )
-    val pdlNavnQuery = PdlNavnQuery(PdlNavnQuery.Variables(identer))
-    val result: GraphQLClientResponse<PdlNavnQuery.Result> = client.execute(pdlNavnQuery) {
+
+    val pdlQuery = PdlQuery(PdlQuery.Variables(identer))
+    val result: GraphQLClientResponse<PdlQuery.Result> = client.execute(pdlQuery) {
         header(HttpHeaders.Authorization, "Bearer $accessToken")
-        // header("Nav-Call-Id", navCallId)
         header("Tema", "GEN")
     }
-    println("Req executed")
 
     return if (result.data == null) {
         logger.error("Error in GraphQL query: ${result.errors?.joinToString { it.message }}")
         null
     } else {
         result.data
-        //call.respond<List<HentPersonBolkResult>>(result.data!!.hentPersonBolk)
     }
 }

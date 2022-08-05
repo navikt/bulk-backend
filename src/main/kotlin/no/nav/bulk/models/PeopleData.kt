@@ -1,17 +1,18 @@
 package no.nav.bulk.models
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 /**
  * The expected request class to this API.
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class PeopleDataRequest(val personidenter: List<String>)
 
 /**
  * The relevant part of PersonInfo (data from KRR) that is sent as a response from this API.
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class Person(
     val personident: String,
     val spraak: String? = null,
@@ -22,7 +23,7 @@ data class Person(
     val leverandoerSertifikat: String? = null,
 )
 
-@kotlinx.serialization.Serializable
+@Serializable
 enum class FeilType(val value: String) {
     @SerialName("kan_ikke_varsles")
     KAN_IKKE_VARSLES("kan_ikke_varsles"),
@@ -46,16 +47,18 @@ enum class FeilType(val value: String) {
     SKJERMET("skjermet"),
 }
 
+fun FeilType.canQueryPdl() = this == FeilType.UTDATERT_KONTAKTINFORMASJON
+
 /**
  * Container class consisting of the Person object if there was no error, or an error object
  * denoting if that person is not available.
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class PersonData(val person: Person?, val feil: FeilType?)
 
 /**
  * The actual response sent back to the user from this API.
  * The string in the hashmap maps to the personident in the person object.
  */
-@kotlinx.serialization.Serializable
+@Serializable
 data class PeopleDataResponse(val personer: Map<String, PersonData>)

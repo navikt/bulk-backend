@@ -9,6 +9,5 @@ query PdlNavnQuery($identer: [ID!]!) {
                 forkortetNavn
             }
         }
-        , code
     }
 }
