@@ -7,12 +7,13 @@ import no.nav.bulk.models.PeopleDataResponse
 import no.nav.bulk.models.PersonData
 
 private const val krrCsvHeader: String = "Personident,Språk,E-post,Mobilnummer,Adresse,Feil"
-private const val krrAndPdlDataHeader: String = "Personident,Språk,E-post,Mobilnummer,Adresse,Fornavn,Mellomnavn,Etternavn,Feil"
+private const val krrAndPdlDataHeader: String =
+    "Personident,Språk,E-post,Mobilnummer,Adresse,Fornavn,Mellomnavn,Etternavn,Feil"
 
 private fun mapKrrDataToCSV(
-    stringBuilder: StringBuilder,
     peopleData: PeopleDataResponse
 ): StringBuilder {
+    val stringBuilder = StringBuilder()
     stringBuilder.append(krrCsvHeader)
     for ((personident, personData) in peopleData.personer) {
         stringBuilder.append("\n")
@@ -32,10 +33,10 @@ private fun mapKrrDataToCSV(
 }
 
 private fun implMapKrrAndPdlDataToCsv(
-    stringBuilder: StringBuilder,
     krrData: PeopleDataResponse,
     pdlData: PDLResponse
 ): StringBuilder {
+    val stringBuilder = StringBuilder()
     stringBuilder.append(krrAndPdlDataHeader)
     for ((personident, personDataPair) in mergeKrrAndPdlData(krrData, pdlData)) {
         stringBuilder.append("\n")
@@ -70,19 +71,17 @@ private fun implMapKrrAndPdlDataToCsv(
 }
 
 fun mapToCSV(krrData: PeopleDataResponse, pdlData: PDLResponse? = null): String {
-    val stringBuilder = StringBuilder()
     val krrDataIsValid = krrData.personer.isNotEmpty()
-    val pdlDataIsValid = !pdlData.isNullOrEmpty()
-    if (krrDataIsValid && pdlDataIsValid) {
-        return implMapKrrAndPdlDataToCsv(stringBuilder, krrData, pdlData!!).toString()
+    if (krrDataIsValid && !pdlData.isNullOrEmpty()) {
+        return implMapKrrAndPdlDataToCsv(krrData, pdlData).toString()
     } else if (krrDataIsValid) {
-        return mapKrrDataToCSV(stringBuilder, krrData).toString()
+        return mapKrrDataToCSV(krrData).toString()
     }
     return ""
 }
 
 fun Vegadresse.toAdresseString(): String {
-    return "${this.adressenavn} ${this.husnummer}${this.husbokstav ?: ""} ${this.postnummer}"
+    return "${this.adressenavn ?: ""} ${this.husnummer ?: ""}${this.husbokstav ?: ""} ${this.postnummer ?: ""}"
 }
 
 fun mergeKrrAndPdlData(
