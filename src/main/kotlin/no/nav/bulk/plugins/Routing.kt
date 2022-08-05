@@ -8,13 +8,11 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import no.nav.bulk.generated.PdlQuery
+import kotlinx.coroutines.*
+import no.nav.bulk.generated.pdlquery.Person
 import no.nav.bulk.lib.*
 import no.nav.bulk.logger
+import no.nav.bulk.models.PDLResponse
 import no.nav.bulk.models.PeopleDataRequest
 import no.nav.bulk.models.PeopleDataResponse
 import java.lang.Integer.max
@@ -45,11 +43,14 @@ fun getCorrectAccessToken(call: ApplicationCall): String? {
  * the response into PeopleDataResponse and creates the CSV file, that is used in the response to
  * the call.
  */
+// TODO: Make application able to respond to JSON and also include PDL. Create a function to take two responses and merge into one generic map that can be serialized to JSON
 suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
     val call = pipelineContext.call
-    val accessToken =
+    val accessTokenKRR =
         getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
     val navCallId = getNavCallId(call)
+    val accessTokenPDL = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE)
+        ?: return call.respond(HttpStatusCode.InternalServerError)
 
     val requestData: PeopleDataRequest
     val startCallReceive = LocalDateTime.now()
@@ -62,29 +63,28 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     logger.info(
         "Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)} ms"
     )
-
     logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
 
     val responseFormat =
         if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV
         else ResponseFormat.JSON
     val includePdl = call.request.queryParameters["pdl"].toBoolean()
-    // TODO: Make application able to respond to JSON and also include PDL. Create a function to take two responses and merge into one generic map that can be serialized to JSON
     if (includePdl && responseFormat == ResponseFormat.JSON) call.respond(
         HttpStatusCode.BadRequest,
-        "Cannot include PDL data and respond with JSON. Change respond type to CSV or do not include PDL in query parameters.")
+        "Cannot include PDL data and respond with JSON. Change respond type to CSV or do not include PDL in query parameters."
+    )
 
     val startBatchRequest = LocalDateTime.now()
     lateinit var peopleDataResponse: PeopleDataResponse
-//    lateinit var pdlResponse: PdlQuery.Result
+    var pdlResponse: PDLResponse? = null
 
-    coroutineScope {
+    runBlocking {
         launch {
-            peopleDataResponse = constructPeopleDataResponse(requestData, accessToken, navCallId)
+            peopleDataResponse = constructPeopleDataResponse(requestData, accessTokenKRR, navCallId)
         }
         if (includePdl && responseFormat == ResponseFormat.CSV) {
             launch {
-                //pdlResponse = getPnrsNames()
+                pdlResponse = constructPDLResponse(requestData.personidenter, accessTokenPDL)
             }
         }
     }
@@ -93,8 +93,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
     )
 
-    // At this stage, all the communication with DigDir is done
-    respondCall(call, peopleDataResponse, responseFormat)
+    respondCall(call, peopleDataResponse, pdlResponse, responseFormat)
 }
 
 suspend fun constructPeopleDataResponse(
@@ -130,21 +129,66 @@ suspend fun constructPeopleDataResponse(
     return peopleDataResponseTotal
 }
 
-suspend fun constructPDLResponse() {
+suspend fun constructPDLResponse(identer: List<String>, accessToken: String)
+    : PDLResponse {
+    val pdlResponseTotal = mutableMapOf<String, Person?>()
+    val numThreads = min(max(identer.size / 10_000, 1), 20)
+    val batchSizeForThreads = identer.size / numThreads
+    val deferredMutableList = mutableListOf<Deferred<PDLResponse>>()
 
+    coroutineScope {
+        launch {
+            for (i in 0 until numThreads) {
+                val deferred = async {
+                    getPDLResponse(
+                        identer,
+                        accessToken,
+                        i,
+                        batchSizeForThreads
+                    )
+                }
+                deferredMutableList.add(deferred)
+            }
+        }
+    }
+    for (deferred in deferredMutableList) {
+        val pdlResponse = deferred.await()
+        pdlResponseTotal.putAll(pdlResponse)
+    }
+    return pdlResponseTotal
+}
+
+suspend fun getPDLResponse(
+    identer: List<String>,
+    accessToken: String,
+    threadNr: Int,
+    batchSize: Int
+): PDLResponse {
+    val pdlResponseTotal = mutableMapOf<String, Person?>()
+    val stepSize = 100
+
+    for (j in threadNr * batchSize until threadNr * batchSize + batchSize step stepSize) {
+        val end = min(j + stepSize, identer.size)
+        val pdlResponse = getPDLInfo(
+            identer.slice(j until end),
+            accessToken = accessToken
+        ) ?: continue
+        pdlResponseTotal.putAll(pdlResponse)
+    }
+    return pdlResponseTotal
 }
 
 suspend fun getPeopleDataResponse(
     requestData: PeopleDataRequest,
     accessToken: String,
     navCallId: String,
-    threadId: Int,
+    threadNr: Int,
     batchSize: Int
 ): PeopleDataResponse {
     val peopleDataResponse = PeopleDataResponse(mutableMapOf())
     val stepSize = 500
 
-    for (j in threadId * batchSize until threadId * batchSize + batchSize step stepSize) {
+    for (j in threadNr * batchSize until threadNr * batchSize + batchSize step stepSize) {
         val end = min(j + stepSize, requestData.personidenter.size)
         val digDirResponse = getContactInfo(
             requestData.personidenter.slice(j until end),
@@ -160,11 +204,12 @@ suspend fun getPeopleDataResponse(
 suspend fun respondCall(
     call: ApplicationCall,
     peopleDataResponse: PeopleDataResponse,
+    pdlResponse: PDLResponse?,
     responseFormat: ResponseFormat
 ) {
     if (responseFormat == ResponseFormat.CSV) {
         val startMapToCSV = LocalDateTime.now()
-        val peopleCSV = mapToCSV(peopleDataResponse)
+        val peopleCSV = mapToCSV(peopleDataResponse, pdlResponse)
         val endMapToCSV = LocalDateTime.now()
         logger.info(
             "Time mapping to CSV: ${startMapToCSV.until(endMapToCSV, ChronoUnit.MILLIS)} ms"
