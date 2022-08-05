@@ -1,24 +1,96 @@
 package no.nav.bulk.lib
 
+import no.nav.bulk.generated.pdlquery.Person
+import no.nav.bulk.generated.pdlquery.Vegadresse
 import no.nav.bulk.models.PDLResponse
 import no.nav.bulk.models.PeopleDataResponse
+import no.nav.bulk.models.PersonData
 
-fun mapToCSV(peopleData: PeopleDataResponse, pdlResponse: PDLResponse? = null): String {
-    val p = StringBuilder()
-    p.append("Personident,Språk,E-post,Mobilnummer,Adresse,Feil")
+private const val krrCsvHeader: String = "Personident,Språk,E-post,Mobilnummer,Adresse,Feil"
+private const val krrAndPdlDataHeader: String = "Personident,Språk,E-post,Mobilnummer,Adresse,Fornavn,Mellomnavn,Etternavn,Feil"
+
+private fun mapKrrDataToCSV(
+    stringBuilder: StringBuilder,
+    peopleData: PeopleDataResponse
+): StringBuilder {
+    stringBuilder.append(krrCsvHeader)
     for ((personident, personData) in peopleData.personer) {
-        p.append("\n")
-        p.append(personident)
-        p.append(',')
-        p.append(personData.person?.spraak ?: "")
-        p.append(',')
-        p.append(personData.person?.epostadresse ?: "")
-        p.append(',')
-        p.append(personData.person?.mobiltelefonnummer ?: "")
-        p.append(',')
-        p.append(personData.person?.adresse ?: "")
-        p.append(',')
-        p.append(personData.feil?.value ?: "")
+        stringBuilder.append("\n")
+        stringBuilder.append(personident)
+        stringBuilder.append(',')
+        stringBuilder.append(personData.person?.spraak ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personData.person?.epostadresse ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personData.person?.mobiltelefonnummer ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personData.person?.adresse ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personData.feil?.value ?: "")
     }
-    return p.toString()
+    return stringBuilder
+}
+
+private fun implMapKrrAndPdlDataToCsv(
+    stringBuilder: StringBuilder,
+    krrData: PeopleDataResponse,
+    pdlData: PDLResponse
+): StringBuilder {
+    stringBuilder.append(krrAndPdlDataHeader)
+    for ((personident, personDataPair) in mergeKrrAndPdlData(krrData, pdlData)) {
+        stringBuilder.append("\n")
+        stringBuilder.append(personident)
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.first.person?.spraak ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.first.person?.epostadresse ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.first.person?.mobiltelefonnummer ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(
+            personDataPair.first.person?.adresse
+                ?: personDataPair
+                    .second
+                    ?.bostedsadresse
+                    ?.firstOrNull()
+                    ?.vegadresse
+                    ?.toAdresseString()
+                ?: ""
+        )
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.fornavn ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.mellomnavn ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.etternavn ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.first.feil?.value ?: "")
+    }
+    return stringBuilder
+}
+
+fun mapToCSV(krrData: PeopleDataResponse, pdlData: PDLResponse? = null): String {
+    val stringBuilder = StringBuilder()
+    val krrDataIsValid = krrData.personer.isNotEmpty()
+    val pdlDataIsValid = !pdlData.isNullOrEmpty()
+    if (krrDataIsValid && pdlDataIsValid) {
+        return implMapKrrAndPdlDataToCsv(stringBuilder, krrData, pdlData!!).toString()
+    } else if (krrDataIsValid) {
+        return mapKrrDataToCSV(stringBuilder, krrData).toString()
+    }
+    return ""
+}
+
+fun Vegadresse.toAdresseString(): String {
+    return "${this.adressenavn} ${this.husnummer}${this.husbokstav ?: ""} ${this.postnummer}"
+}
+
+fun mergeKrrAndPdlData(
+    krrData: PeopleDataResponse,
+    pdlData: PDLResponse
+): Map<String, Pair<PersonData, Person?>> {
+    val unionList: MutableMap<String, PersonData> = krrData.personer.toMutableMap()
+    return unionList.mapValues { (personident, personData) ->
+        Pair(personData, pdlData.getValue(personident))
+    }
 }
