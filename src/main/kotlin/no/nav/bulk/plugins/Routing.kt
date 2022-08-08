@@ -7,15 +7,11 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.pipeline.*
 import kotlinx.coroutines.*
 import no.nav.bulk.generated.pdlquery.Person
 import no.nav.bulk.lib.*
 import no.nav.bulk.logger
-import no.nav.bulk.models.PDLResponse
-import no.nav.bulk.models.PeopleDataRequest
-import no.nav.bulk.models.PeopleDataResponse
-import no.nav.bulk.models.PersonData
+import no.nav.bulk.models.*
 import java.lang.Integer.max
 import java.lang.Integer.min
 import java.time.LocalDateTime
@@ -30,10 +26,37 @@ enum class ResponseFormat {
  * Function to get the correct access token (OBO of client credentials) based on environment.
  * Returns the access token or null if unauthorized or the token was not accessible.
  */
-fun getCorrectAccessToken(call: ApplicationCall): String? {
+fun getCorrectAccessToken(headers: Headers): String? {
     if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials(AuthConfig.SCOPE)
-    val accessToken = call.request.headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
+    val accessToken = headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
     return getAccessTokenOBO(AuthConfig.SCOPE, accessToken)
+}
+
+fun combineKRRAndPDL(peopleDataResponse: PeopleDataResponse, pdlResponse: PDLResponse?): PersonerResponse {
+    val personerResponseMap = mutableMapOf<String, PersonResponse>()
+    for ((personident, personData) in peopleDataResponse.personer) {
+        val pdlPerson = pdlResponse?.getValue(personident)
+        val personTotal = PersonTotal(
+            personident = personident,
+            spraak = personData.person?.spraak,
+            epostadresse = personData.person?.epostadresse,
+            mobiltelefonnummer = personData.person?.mobiltelefonnummer,
+            adresse = personData.person?.adresse,
+            navn = pdlPerson?.navn,
+            bostedsadresse = pdlPerson?.bostedsadresse,
+            doedsfall = pdlPerson?.doedsfall
+        )
+        val persData = PersonResponse(personTotal, personData.feil)
+        personerResponseMap[personident] = persData
+    }
+    return PersonerResponse(personerResponseMap)
+}
+
+sealed class PersonerStatus {
+    class Error(val status: HttpStatusCode, val message: String? = null) : PersonerStatus()
+    class SuccessCSV(val csv: String) : PersonerStatus()
+    class SuccessJson(val response: PersonerResponse) : PersonerStatus()
+
 }
 
 /**
@@ -42,33 +65,17 @@ fun getCorrectAccessToken(call: ApplicationCall): String? {
  * the response into PeopleDataResponse and creates the CSV file, that is used in the response to
  * the call.
  */
-// TODO: Make application able to respond to JSON and also include PDL. Create a function to take two responses and merge into one generic map that can be serialized to JSON
-suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, ApplicationCall>) {
-    val call = pipelineContext.call
-    val responseFormat = if (call.request.queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
-    val includePdl = call.request.queryParameters["pdl"].toBoolean()
-    val accessTokenKRR = getCorrectAccessToken(call) ?: return call.respond(HttpStatusCode.Unauthorized)
+suspend fun personerEndpointResponse(
+    headers: Headers,
+    queryParameters: Parameters,
+    requestData: PeopleDataRequest
+): PersonerStatus {
+    val responseFormat = if (queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
+    val includePdl = queryParameters["pdl"].toBoolean()
+    val accessTokenKRR = getCorrectAccessToken(headers) ?: return PersonerStatus.Error(HttpStatusCode.Unauthorized)
     val accessTokenPDL = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE)
-        ?: return call.respond(HttpStatusCode.InternalServerError)
-    val navCallId = getNavCallId(call)
-
-    val requestData: PeopleDataRequest
-    val startCallReceive = LocalDateTime.now()
-    try {
-        requestData = call.receive()
-    } catch (e: CannotTransformContentToTypeException) {
-        return call.respond(HttpStatusCode.BadRequest)
-    }
-    val endCallReceive = LocalDateTime.now()
-    logger.info(
-        "Time Deserialize request data: ${startCallReceive.until(endCallReceive, ChronoUnit.MILLIS)} ms"
-    )
-    logger.info("Recieved request for ${requestData.personidenter.size} pnrs")
-
-    if (includePdl && responseFormat == ResponseFormat.JSON) call.respond(
-        HttpStatusCode.BadRequest,
-        "Cannot include PDL data and respond with JSON. Change respond type to CSV or do not include PDL in query parameters."
-    )
+        ?: return PersonerStatus.Error(HttpStatusCode.InternalServerError)
+    val navCallId = getNavCallId(headers)
 
     val startBatchRequest = LocalDateTime.now()
     lateinit var peopleDataResponse: PeopleDataResponse
@@ -78,7 +85,7 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
         launch {
             peopleDataResponse = constructPeopleDataResponse(requestData.personidenter, accessTokenKRR, navCallId)
         }
-        if (includePdl && responseFormat == ResponseFormat.CSV) {
+        if (includePdl) {
             launch {
                 pdlResponse = constructPDLResponse(requestData.personidenter, accessTokenPDL)
             }
@@ -88,8 +95,9 @@ suspend fun personerEndpointResponse(pipelineContext: PipelineContext<Unit, Appl
     logger.info(
         "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
     )
-
-    respondCall(call, peopleDataResponse, pdlResponse, responseFormat)
+    if (responseFormat == ResponseFormat.CSV)
+        return PersonerStatus.SuccessCSV(mapToCSV(peopleDataResponse, pdlResponse))
+    return PersonerStatus.SuccessJson(combineKRRAndPDL(peopleDataResponse, pdlResponse))
 }
 
 suspend fun constructPeopleDataResponse(
@@ -182,23 +190,6 @@ suspend fun getPeopleDataResponse(
     return peopleDataResponse.personer
 }
 
-suspend fun respondCall(
-    call: ApplicationCall,
-    peopleDataResponse: PeopleDataResponse,
-    pdlResponse: PDLResponse?,
-    responseFormat: ResponseFormat
-) {
-    if (responseFormat == ResponseFormat.CSV) {
-        val startMapToCSV = LocalDateTime.now()
-        val peopleCSV = mapToCSV(peopleDataResponse, pdlResponse)
-        val endMapToCSV = LocalDateTime.now()
-        logger.info(
-            "Time mapping to CSV: ${startMapToCSV.until(endMapToCSV, ChronoUnit.MILLIS)} ms"
-        )
-        call.respondText(peopleCSV)
-    } else call.respond(peopleDataResponse)
-}
-
 fun Application.configureRouting() {
     routing {
         get("/isalive") { call.respond("Alive") }
@@ -208,7 +199,18 @@ fun Application.configureRouting() {
         fun postPersonerEndpoint() = post("/personer") {
             logger.info("Process request")
             val start = LocalDateTime.now()
-            personerEndpointResponse(this)
+            val requestData: PeopleDataRequest
+            try {
+                requestData = call.receive()
+            } catch (e: CannotTransformContentToTypeException) {
+                return@post call.respond(HttpStatusCode.BadRequest, e.message.toString())
+            }
+            when (val status =
+                personerEndpointResponse(call.request.headers, call.request.queryParameters, requestData)) {
+                is PersonerStatus.Error -> call.respond(status.status, status.message ?: "")
+                is PersonerStatus.SuccessCSV -> call.respondText(status.csv)
+                is PersonerStatus.SuccessJson -> call.respond(status.response)
+            }
             val end = LocalDateTime.now()
             logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")
         }
@@ -220,7 +222,7 @@ fun Application.configureRouting() {
     }
 }
 
-fun getNavCallId(call: ApplicationCall): String {
-    return call.request.headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") } ?: UUID.randomUUID()
-        .toString().also { logger.info("Create new Nav-Call-Id: $it") }
+fun getNavCallId(headers: Headers): String {
+    return headers["Nav-Call-Id"].also { logger.info("Forward Nav-Call-Id: $it") }
+        ?: UUID.randomUUID().toString().also { logger.info("Create new Nav-Call-Id: $it") }
 }
