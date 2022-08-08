@@ -40,6 +40,11 @@ private fun implMapKrrAndPdlDataToCsv(
     stringBuilder.append(krrAndPdlDataHeader)
     for ((personident, personDataPair) in mergeKrrAndPdlData(krrData, pdlData)) {
         stringBuilder.append("\n")
+        val krrError = krrData.personer[personident]?.feil
+        if (krrError != null) {
+            stringBuilder.append("${personident},,,,,,,,${krrError.value}")
+            continue
+        }
         stringBuilder.append(personident)
         stringBuilder.append(',')
         stringBuilder.append(personDataPair.first.person?.spraak ?: "")
