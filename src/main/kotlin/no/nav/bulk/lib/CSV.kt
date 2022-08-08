@@ -8,7 +8,7 @@ import no.nav.bulk.models.PersonData
 
 private const val krrCsvHeader: String = "Personident,Språk,E-post,Mobilnummer,Adresse,Feil"
 private const val krrAndPdlDataHeader: String =
-    "Personident,Språk,E-post,Mobilnummer,Adresse,Fornavn,Mellomnavn,Etternavn,Feil"
+    "Personident,Språk,E-post,Mobilnummer,Adresse,Fornavn,Mellomnavn,Etternavn,Dødsdato,Feil"
 
 private fun mapKrrDataToCSV(
     peopleData: PeopleDataResponse
@@ -40,11 +40,11 @@ private fun implMapKrrAndPdlDataToCsv(
     stringBuilder.append(krrAndPdlDataHeader)
     for ((personident, personDataPair) in mergeKrrAndPdlData(krrData, pdlData)) {
         stringBuilder.append("\n")
-        val krrError = krrData.personer[personident]?.feil
-        if (krrError != null) {
-            stringBuilder.append("${personident},,,,,,,,${krrError.value}")
-            continue
-        }
+        //        val krrError = krrData.personer[personident]?.feil
+        //        if (krrError != null) {
+        //            stringBuilder.append("${personident},,,,,,,,,${krrError.value}")
+        //            continue
+        //        }
         stringBuilder.append(personident)
         stringBuilder.append(',')
         stringBuilder.append(personDataPair.first.person?.spraak ?: "")
@@ -69,6 +69,8 @@ private fun implMapKrrAndPdlDataToCsv(
         stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.mellomnavn ?: "")
         stringBuilder.append(',')
         stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.etternavn ?: "")
+        stringBuilder.append(',')
+        stringBuilder.append(personDataPair.second?.doedsfall?.firstOrNull()?.doedsdato ?: "")
         stringBuilder.append(',')
         stringBuilder.append(personDataPair.first.feil?.value ?: "")
     }

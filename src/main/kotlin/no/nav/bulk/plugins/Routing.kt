@@ -27,7 +27,7 @@ enum class ResponseFormat {
 }
 
 /**
- * Function to get the correct access token (OBO of lient credentials) based on environment.
+ * Function to get the correct access token (OBO of client credentials) based on environment.
  * Returns the access token or null if unauthorized or the token was not accessible.
  */
 fun getCorrectAccessToken(call: ApplicationCall): String? {
@@ -215,20 +215,6 @@ fun Application.configureRouting() {
 
         if (!RunEnv.isDevelopment()) authenticate { postPersonerEndpoint() }
         else postPersonerEndpoint()
-
-        fun pdlEndpointRequest() = post("/pdl") {
-
-            val requestData: PeopleDataRequest
-            try {
-                requestData = call.receive()
-            } catch (e: CannotTransformContentToTypeException) {
-                return@post call.respond(HttpStatusCode.BadRequest)
-            }
-            //val res = getPDLInfo(requestData.personidenter)
-            //if (res != null) call.respond(res) else call.respond(500)
-        }
-
-        if (!RunEnv.isDevelopment()) authenticate { pdlEndpointRequest() } else pdlEndpointRequest()
 
         authenticate { get("/auth") { call.respond(HttpStatusCode.OK) } }
     }
