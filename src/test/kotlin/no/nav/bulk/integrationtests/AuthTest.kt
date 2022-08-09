@@ -6,6 +6,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.testing.*
+import io.ktor.util.*
 import no.nav.bulk.initializeHttpClient
 import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.AuthConfig.CLIENT_ID
@@ -66,7 +67,7 @@ class AuthTest {
     fun `http POST to personer endpoint without token should return 401`() = testApplication {
             configTestApp(wellKnownUrl)
             val res = client.post("/personer")
-            assertEquals(HttpStatusCode.Unauthorized, res.status)
+            assertEquals(HttpStatusCode.BadRequest, res.status)
     }
 
     @Test
