@@ -130,6 +130,7 @@ dependencies {
 graphql {
     client {
         endpoint = "https://pdl-api.dev-fss-pub.nais.io/graphql"
+        sdlEndpoint = "https://navikt.github.io/pdl/pdl-api-sdl.graphqls"
         packageName = "no.nav.bulk.generated"
         serializer = GraphQLSerializer.KOTLINX
     }
