@@ -95,6 +95,10 @@ suspend fun personerEndpointResponse(
     logger.info(
         "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
     )
+    if (peopleDataResponse.personer.isNotEmpty()) return PersonerStatus.Error(
+        HttpStatusCode.InternalServerError,
+        "KRR responded with no data."
+    )
     if (responseFormat == ResponseFormat.CSV)
         return PersonerStatus.SuccessCSV(mapToCSV(peopleDataResponse, pdlResponse))
     return PersonerStatus.SuccessJson(combineKRRAndPDL(peopleDataResponse, pdlResponse))
@@ -150,6 +154,7 @@ suspend fun <Value> performBulkRequestsInParallel(
         val value = deferred.await()
         valueMap.putAll(value)
     }
+    println("Finshed bulk request")
     return valueMap
 }
 

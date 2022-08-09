@@ -40,11 +40,6 @@ private fun implMapKrrAndPdlDataToCsv(
     stringBuilder.append(krrAndPdlDataHeader)
     for ((personident, personDataPair) in mergeKrrAndPdlData(krrData, pdlData)) {
         stringBuilder.append("\n")
-        //        val krrError = krrData.personer[personident]?.feil
-        //        if (krrError != null) {
-        //            stringBuilder.append("${personident},,,,,,,,,${krrError.value}")
-        //            continue
-        //        }
         stringBuilder.append(personident)
         stringBuilder.append(',')
         stringBuilder.append(personDataPair.first.person?.spraak ?: "")
@@ -78,13 +73,9 @@ private fun implMapKrrAndPdlDataToCsv(
 }
 
 fun mapToCSV(krrData: PeopleDataResponse, pdlData: PDLResponse? = null): String {
-    val krrDataIsValid = krrData.personer.isNotEmpty()
-    if (krrDataIsValid && !pdlData.isNullOrEmpty()) {
+    if (!pdlData.isNullOrEmpty())
         return implMapKrrAndPdlDataToCsv(krrData, pdlData).toString()
-    } else if (krrDataIsValid) {
-        return mapKrrDataToCSV(krrData).toString()
-    }
-    return ""
+    return mapKrrDataToCSV(krrData).toString()
 }
 
 fun Vegadresse.toAdresseString(): String {
