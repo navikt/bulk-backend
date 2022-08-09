@@ -77,7 +77,7 @@ class RequestsTest {
                 "1234",
                 "11111100000"
             )
-            val accessToken = getAccessTokenClientCredentials(AuthConfig.SCOPE) ?: ""
+            val accessToken = getAccessTokenClientCredentials(AuthConfig.KRR_API_SCOPE) ?: ""
             val response =
                 getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
 
@@ -107,7 +107,7 @@ class RequestsTest {
                 "07506535861",
                 "07428827184",
             )
-            val accessToken = getAccessTokenClientCredentials(AuthConfig.SCOPE) ?: ""
+            val accessToken = getAccessTokenClientCredentials(AuthConfig.KRR_API_SCOPE) ?: ""
             val response =
                 getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
 
@@ -130,7 +130,7 @@ class RequestsTest {
         try {
             initializeHttpClient()
             val time = LocalDateTime.now()
-            val tokenEndpointResponse = getAccessTokenClientCredentials(AuthConfig.SCOPE)
+            val tokenEndpointResponse = getAccessTokenClientCredentials(AuthConfig.KRR_API_SCOPE)
             assertTrue(tokenEndpointResponse != null, "Token is not null")
 
             val decodedJwt = JWT.decode(tokenEndpointResponse)

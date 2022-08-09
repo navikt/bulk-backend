@@ -17,7 +17,7 @@ object RunEnv {
 
 object AuthConfig {
     const val PDL_API_SCOPE = "api://dev-fss.pdl.pdl-api/.default"
-    const val SCOPE = "api://dev-gcp.team-rocket.digdir-krr-proxy/.default"
+    const val KRR_API_SCOPE = "api://dev-gcp.team-rocket.digdir-krr-proxy/.default"
     const val TEAM_BULK_GROUP_ID_PROD = "e08a856f-6e64-48b0-978b-5b201760fa13"
     const val TEAM_BULK_GROUP_ID_DEV = "0242dce3-f722-4c6b-ac97-2dd7cc798c4e"
     val CLIENT_ID: String = dotenv["AZURE_APP_CLIENT_ID"]

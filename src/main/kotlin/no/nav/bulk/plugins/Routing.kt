@@ -27,9 +27,9 @@ enum class ResponseFormat {
  * Returns the access token or null if unauthorized or the token was not accessible.
  */
 fun getCorrectAccessToken(headers: Headers): String? {
-    if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials(AuthConfig.SCOPE)
+    if (RunEnv.isDevelopment()) return getAccessTokenClientCredentials(AuthConfig.KRR_API_SCOPE)
     val accessToken = headers[HttpHeaders.Authorization]?.removePrefix("Bearer ") ?: return null
-    return getAccessTokenOBO(AuthConfig.SCOPE, accessToken)
+    return getAccessTokenOBO(AuthConfig.KRR_API_SCOPE, accessToken)
 }
 
 fun combineKRRAndPDL(peopleDataResponse: PeopleDataResponse, pdlResponse: PDLResponse?): PersonerResponse {
