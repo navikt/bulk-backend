@@ -1,0 +1,24 @@
+query PdlQuery($identer: [ID!]!) {
+    hentPersonBolk(identer: $identer) {
+        ident
+        person {
+            navn(historikk: false) {
+                fornavn
+                mellomnavn
+                etternavn
+                forkortetNavn
+            }
+            bostedsadresse {
+                vegadresse {
+                    adressenavn
+                    husnummer
+                    husbokstav
+                    postnummer
+                }
+            }
+            doedsfall {
+                doedsdato
+            }
+        }
+    }
+}

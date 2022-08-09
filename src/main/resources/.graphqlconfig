@@ -1,0 +1,15 @@
+{
+  "name": "pdl-api",
+  "schemaPath": "build/schema.graphql",
+  "extensions": {
+    "endpoints": {
+      "PDL GraphQL Endpoint": {
+        "url": "https://pdl-api.dev-fss-pub.nais.io/graphql",
+        "headers": {
+          "user-agent": "bulk-backend"
+        },
+        "introspect": true
+      }
+    }
+  }
+}

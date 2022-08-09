@@ -30,12 +30,13 @@ fun isValidContactInfo(personInfo: DigDirPerson): DigDirPersonValidationResult {
     if (nullEmail && nullPhone) return DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     if (oudatedEmail || nullEmail) return DigDirPersonValidationResult.Success(SuccessCaveat.INVALID_EMAIL)
     if (outdatedPhone || nullPhone) return DigDirPersonValidationResult.Success(SuccessCaveat.INVALID_PHONE)
+    if (personInfo.kanVarsles != true) return DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     return DigDirPersonValidationResult.Success(SuccessCaveat.NONE)
 }
 
 fun validateDigDirPersonInfo(personInfo: DigDirPerson): DigDirPersonValidationResult {
     // When person is "null" in DigDir, it means that the person is not allowed to be contacted
-    if (personInfo.kanVarsles != true || personInfo.reservert != false || personInfo.aktiv != true) {
+    if (personInfo.reservert != false || personInfo.aktiv != true) {
         return DigDirPersonValidationResult.Fail(FeilType.KAN_IKKE_VARSLES)
     }
     return isValidContactInfo(personInfo)

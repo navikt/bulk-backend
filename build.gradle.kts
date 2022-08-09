@@ -1,14 +1,18 @@
+import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
+
 val ktorVersion: String by project
 val kotlinVersion: String by project
 val logbackVersion: String by project
 val junitJupiterVersion: String by project
 val mockOAuth2ServerVersion: String by project
 val coroutinesVersion: String by project
+val latestGraphQLKotlinVersion: String by project
 
 plugins {
     application
     kotlin("jvm") version "1.7.0"
     kotlin("plugin.serialization") version "1.7.0"
+    id("com.expediagroup.graphql") version "6.1.0"
     //id("com.github.johnrengelman.shadow") version "7.1.2"   || Shadow JAR
 }
 
@@ -108,6 +112,9 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("com.auth0:auth0:1.42.0")
 
+    implementation("com.expediagroup:graphql-kotlin-ktor-client:$latestGraphQLKotlinVersion")
+    implementation("com.expediagroup:graphql-kotlin-client-serialization:$latestGraphQLKotlinVersion")
+
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
@@ -115,9 +122,16 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
-
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+}
 
+graphql {
+    client {
+        // endpoint = "https://pdl-api.dev-fss-pub.nais.io/graphql"
+        sdlEndpoint = "https://navikt.github.io/pdl/pdl-api-sdl.graphqls"
+        packageName = "no.nav.bulk.generated"
+        serializer = GraphQLSerializer.KOTLINX
+    }
 }
