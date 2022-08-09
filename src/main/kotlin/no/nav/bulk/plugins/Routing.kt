@@ -107,7 +107,7 @@ suspend fun personerEndpointResponse(
     return PersonerStatus.SuccessJson(combineKRRAndPDL(peopleDataResponse, pdlResponse))
 }
 
-fun getOptimalNumberOfThreads(requestSize: Int, batchSizePerRequest: Int, maxNumberOfThreads: Int = 100): Int {
+fun getOptimalNumberOfThreads(requestSize: Int, batchSizePerRequest: Int, maxNumberOfThreads: Int = 20): Int {
     return min(max(requestSize / batchSizePerRequest * 10, 1), maxNumberOfThreads)
 }
 
@@ -164,7 +164,6 @@ suspend fun <Value> performBulkRequestsInParallel(
         val value = deferred.await()
         valueMap.putAll(value)
     }
-    println("Finshed bulk request")
     return valueMap
 }
 
