@@ -17,6 +17,9 @@ import java.lang.Integer.min
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 enum class ResponseFormat {
     JSON, CSV
@@ -104,6 +107,10 @@ suspend fun personerEndpointResponse(
     return PersonerStatus.SuccessJson(combineKRRAndPDL(peopleDataResponse, pdlResponse))
 }
 
+fun getOptimalNumberOfThreads(requestSize: Int, batchSizePerRequest: Int, maxNumberOfThreads: Int = 100): Int {
+    return min(max(requestSize / batchSizePerRequest * 10, 1), maxNumberOfThreads)
+}
+
 suspend fun constructPeopleDataResponse(
     identer: List<String>,
     accessToken: String,
@@ -114,6 +121,7 @@ suspend fun constructPeopleDataResponse(
             identer,
             accessToken,
             navCallId,
+            numThreads = getOptimalNumberOfThreads(identer.size, 500),
             ::getPeopleDataResponse
         )
     )
@@ -123,6 +131,7 @@ suspend fun constructPDLResponse(identer: List<String>, accessToken: String): PD
         identer,
         accessToken,
         navCallId = "", // Don't care about navCallId here
+        numThreads = getOptimalNumberOfThreads(identer.size, 100),
         reqFunc = ::getPDLResponse,
     )
 
@@ -130,11 +139,12 @@ suspend fun <Value> performBulkRequestsInParallel(
     identer: List<String>,
     accessToken: String,
     navCallId: String,
+    numThreads: Int = 5,
     reqFunc: suspend (identer: List<String>, accessToken: String, threadNr: Int, threadBatchSize: Int, navCallId: String) -> Map<String, Value>
 
 ): Map<String, Value> {
     val valueMap = mutableMapOf<String, Value>()
-    val numThreads = min(max(identer.size / 10_000, 1), 20)
+    // val numThreads = min(max(identer.size / 10_000, 1), 20)
     val batchSizeForThreads = identer.size / numThreads
     val deferredMutableList = mutableListOf<Deferred<Map<String, Value>>>()
 
