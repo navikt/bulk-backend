@@ -1,10 +1,8 @@
 package no.nav.bulk.lib
 
-import no.nav.bulk.generated.pdlquery.Person
 import no.nav.bulk.generated.pdlquery.Vegadresse
 import no.nav.bulk.models.PDLResponse
 import no.nav.bulk.models.PeopleDataResponse
-import no.nav.bulk.models.PersonData
 
 private const val krrCsvHeader: String = "Personident,Språk,E-post,Mobilnummer,Adresse,Feil"
 private const val krrAndPdlDataHeader: String =
@@ -38,20 +36,20 @@ private fun implMapKrrAndPdlDataToCsv(
 ): StringBuilder {
     val stringBuilder = StringBuilder()
     stringBuilder.append(krrAndPdlDataHeader)
-    for ((personident, personDataPair) in mergeKrrAndPdlData(krrData, pdlData)) {
+    for ((personident, krrPerson) in krrData.personer) {
+        val pdlPerson = pdlData[personident]
         stringBuilder.append("\n")
         stringBuilder.append(personident)
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.first.person?.spraak ?: "")
+        stringBuilder.append(krrPerson.person?.spraak ?: "")
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.first.person?.epostadresse ?: "")
+        stringBuilder.append(krrPerson.person?.epostadresse ?: "")
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.first.person?.mobiltelefonnummer ?: "")
+        stringBuilder.append(krrPerson.person?.mobiltelefonnummer ?: "")
         stringBuilder.append(',')
         stringBuilder.append(
-            personDataPair.first.person?.adresse
-                ?: personDataPair
-                    .second
+            krrPerson.person?.adresse
+                ?: pdlPerson
                     ?.bostedsadresse
                     ?.firstOrNull()
                     ?.vegadresse
@@ -59,15 +57,15 @@ private fun implMapKrrAndPdlDataToCsv(
                 ?: ""
         )
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.fornavn ?: "")
+        stringBuilder.append(pdlPerson?.navn?.firstOrNull()?.fornavn ?: "")
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.mellomnavn ?: "")
+        stringBuilder.append(pdlPerson?.navn?.firstOrNull()?.mellomnavn ?: "")
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.second?.navn?.firstOrNull()?.etternavn ?: "")
+        stringBuilder.append(pdlPerson?.navn?.firstOrNull()?.etternavn ?: "")
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.second?.doedsfall?.firstOrNull()?.doedsdato ?: "")
+        stringBuilder.append(pdlPerson?.doedsfall?.firstOrNull()?.doedsdato ?: "")
         stringBuilder.append(',')
-        stringBuilder.append(personDataPair.first.feil?.value ?: "")
+        stringBuilder.append(krrPerson.feil?.value ?: "")
     }
     return stringBuilder
 }
@@ -80,14 +78,4 @@ fun mapToCSV(krrData: PeopleDataResponse, pdlData: PDLResponse? = null): String 
 
 fun Vegadresse.toAdresseString(): String {
     return "${this.adressenavn ?: ""} ${this.husnummer ?: ""}${this.husbokstav ?: ""} ${this.postnummer ?: ""}"
-}
-
-fun mergeKrrAndPdlData(
-    krrData: PeopleDataResponse,
-    pdlData: PDLResponse
-): Map<String, Pair<PersonData, Person?>> {
-    val unionList: MutableMap<String, PersonData> = krrData.personer.toMutableMap()
-    return unionList.mapValues { (personident, personData) ->
-        Pair(personData, pdlData.getValue(personident))
-    }
 }
