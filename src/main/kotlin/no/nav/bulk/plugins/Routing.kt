@@ -95,7 +95,7 @@ suspend fun personerEndpointResponse(
     logger.info(
         "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
     )
-    if (peopleDataResponse.personer.isNotEmpty()) return PersonerStatus.Error(
+    if (peopleDataResponse.personer.isEmpty()) return PersonerStatus.Error(
         HttpStatusCode.InternalServerError,
         "KRR responded with no data."
     )
