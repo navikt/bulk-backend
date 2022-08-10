@@ -58,10 +58,13 @@ suspend fun getContactInfo(
                 setBody(DigDirRequest(personnr))
             }
         } catch (e: Exception) {
-            return when (e) {
+            when (e) {
                 is ClientRequestException,
                 is ServerResponseException,
-                is SerializationException -> null
+                is SerializationException -> {
+                    logger.error("Error in request to KRR: ${e.message}")
+                    return null
+                }
 
                 else -> throw e
             }
@@ -78,13 +81,9 @@ suspend fun getPDLInfo(identer: List<String>, accessToken: String): PDLResponse?
         header(HttpHeaders.Authorization, "Bearer $accessToken")
         header("Tema", "GEN")
     }
-    val pdlResult = result.data
-    return if (pdlResult == null) {
-        logger.error("Error in GraphQL query: ${result.errors?.joinToString { it.message }}")
-        null
-    } else {
-        pdlResult.mapPersonBolkResultToPDLResponse()
-    }
+    val pdlErrors = result.errors
+    if (pdlErrors != null) logger.error("Error in requests to PDL: ${pdlErrors.joinToString { it.message }}")
+    return result.data?.mapPersonBolkResultToPDLResponse()
 }
 
 fun PdlQuery.Result.mapPersonBolkResultToPDLResponse(): PDLResponse {
