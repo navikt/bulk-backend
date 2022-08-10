@@ -80,6 +80,7 @@ suspend fun personerEndpointResponse(
         ?: return PersonerStatus.Error(HttpStatusCode.InternalServerError)
     val navCallId = getNavCallId(headers)
 
+    logger.info("Received request for ${requestData.personidenter.size} personidenter.")
     val startBatchRequest = LocalDateTime.now()
     lateinit var peopleDataResponse: PeopleDataResponse
     var pdlResponse: PDLResponse? = null

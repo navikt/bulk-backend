@@ -6,6 +6,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.SerializationException
 import no.nav.bulk.client
 import no.nav.bulk.generated.PdlQuery
@@ -46,6 +47,7 @@ suspend fun getContactInfo(
     accessToken: String,
     navCallId: String
 ): DigDirResponse? {
+    delay((0..500).random().toLong())
     val localClient = clientArg ?: client
     val res =
         try {
@@ -76,6 +78,7 @@ suspend fun getContactInfo(
 
 // TODO: Change return type from null to actual error codes
 suspend fun getPDLInfo(identer: List<String>, accessToken: String): PDLResponse? {
+    delay((0..500).random().toLong())
     val pdlQuery = PdlQuery(PdlQuery.Variables(identer))
     val result: GraphQLClientResponse<PdlQuery.Result> = gqlClient.execute(pdlQuery) {
         header(HttpHeaders.Authorization, "Bearer $accessToken")
