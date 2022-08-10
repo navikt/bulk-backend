@@ -6,13 +6,14 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.SerializationException
 import no.nav.bulk.client
 import no.nav.bulk.generated.PdlQuery
 import no.nav.bulk.gqlClient
 import no.nav.bulk.logger
 import no.nav.bulk.models.DigDirRequest
-import no.nav.bulk.models.DigDirResponse
+import no.nav.bulk.models.KRRAPIResponse
 import no.nav.bulk.models.PDLResponse
 import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
@@ -40,12 +41,13 @@ fun getAccessTokenClientCredentials(scope: String): String? {
     return tokenClient?.createMachineToMachineToken(scope)
 }
 
-suspend fun getContactInfo(
+suspend fun getPeopleDataFromKRR(
     personnr: List<String>,
     clientArg: HttpClient? = null,
     accessToken: String,
     navCallId: String
-): DigDirResponse? {
+): KRRAPIResponse? {
+    delay((0..500).random().toLong())
     val localClient = clientArg ?: client
     val res =
         try {
@@ -58,10 +60,13 @@ suspend fun getContactInfo(
                 setBody(DigDirRequest(personnr))
             }
         } catch (e: Exception) {
-            return when (e) {
+            when (e) {
                 is ClientRequestException,
                 is ServerResponseException,
-                is SerializationException -> null
+                is SerializationException -> {
+                    logger.error("Error in request to KRR: ${e.message}")
+                    return null
+                }
 
                 else -> throw e
             }
@@ -71,22 +76,18 @@ suspend fun getContactInfo(
     else null
 }
 
-// TODO: Change return type from null to actual error codes
-suspend fun getPDLInfo(identer: List<String>, accessToken: String): PDLResponse? {
+suspend fun getPeopleDataFromPDL(identer: List<String>, accessToken: String): PDLResponse? {
+    delay((0..500).random().toLong())
     val pdlQuery = PdlQuery(PdlQuery.Variables(identer))
     val result: GraphQLClientResponse<PdlQuery.Result> = gqlClient.execute(pdlQuery) {
         header(HttpHeaders.Authorization, "Bearer $accessToken")
         header("Tema", "GEN")
     }
-    val pdlResult = result.data
-    return if (pdlResult == null) {
-        logger.error("Error in GraphQL query: ${result.errors?.joinToString { it.message }}")
-        null
-    } else {
-        pdlResult.mapPersonBolkResultToPDLResponse()
-    }
+    val pdlErrors = result.errors
+    if (pdlErrors != null) logger.error("Error in requests to PDL: ${pdlErrors.joinToString { it.message }}")
+    return result.data?.toPDLResponse()
 }
 
-fun PdlQuery.Result.mapPersonBolkResultToPDLResponse(): PDLResponse {
+fun PdlQuery.Result.toPDLResponse(): PDLResponse {
     return hentPersonBolk.associateBy({ it.ident }, { it.person })
 }

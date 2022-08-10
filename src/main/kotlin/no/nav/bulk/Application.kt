@@ -26,10 +26,13 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as CNClient
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation as CNServer
 
 lateinit var client: HttpClient
-val gqlClient = GraphQLKtorClient(url = URL(Endpoints.PDL_API_URL), serializer = GraphQLClientKotlinxSerializer())
+lateinit var gqlClient: GraphQLKtorClient
 
 fun initializeHttpClient() = runBlocking {
-    val newClient = HttpClient(CIO) {
+    client = HttpClient(CIO) {
+        engine {
+            requestTimeout = 50_000
+        }
         install(CNClient) {
             json(
                 Json {
@@ -38,7 +41,20 @@ fun initializeHttpClient() = runBlocking {
             )
         }
     }
-    client = newClient
+}
+
+fun initializeGraphqlClient() = runBlocking {
+    val someClient = HttpClient(CIO) {
+        engine {
+            requestTimeout = 50_000
+        }
+    }
+    gqlClient =
+        GraphQLKtorClient(
+            url = URL(Endpoints.PDL_API_URL),
+            httpClient = someClient,
+            serializer = GraphQLClientKotlinxSerializer()
+        )
 }
 
 val logger: Logger = LoggerFactory.getLogger("no.nav.bulk")
@@ -46,6 +62,7 @@ val logger: Logger = LoggerFactory.getLogger("no.nav.bulk")
 fun main() {
     System.setProperty("org.slf4j.simpleLogger.logFile", "System.out")
     initializeHttpClient()
+    initializeGraphqlClient()
     val env = applicationEngineEnvironment {
         config = HoconApplicationConfig(ConfigFactory.load())
         module {

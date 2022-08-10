@@ -7,7 +7,7 @@ import kotlinx.serialization.SerialName
 data class DigDirRequest(val personidenter: List<String>)
 
 @kotlinx.serialization.Serializable
-data class DigDirPerson(
+data class KRRAPIPerson(
     val personident: String,
     val aktiv: Boolean? = null,
     val kanVarsles: Boolean? = null,
@@ -24,7 +24,7 @@ data class DigDirPerson(
  * Enum class denoting the different errors that DigDir can return.
  */
 @kotlinx.serialization.Serializable
-enum class DigDirFeil(val value: String) {
+enum class KRRAPIError(val value: String) {
     @SerialName("person_ikke_funnet")
     PERSON_IKKE_FUNNET("person_ikke_funnet"),
 
@@ -46,7 +46,7 @@ enum class DigDirFeil(val value: String) {
  * feil maps the personident from a PersonInfo object, into a String that contains the error message
  */
 @kotlinx.serialization.Serializable
-data class DigDirResponse(val personer: Map<String, DigDirPerson>, val feil: Map<String, DigDirFeil>)
+data class KRRAPIResponse(val personer: Map<String, KRRAPIPerson>, val feil: Map<String, KRRAPIError>)
 
 @kotlinx.serialization.Serializable
 data class SikkerDigitalPostkasse(

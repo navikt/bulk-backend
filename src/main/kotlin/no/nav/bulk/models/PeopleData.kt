@@ -10,13 +10,13 @@ import no.nav.bulk.generated.pdlquery.Navn
  * The expected request class to this API.
  */
 @Serializable
-data class PeopleDataRequest(val personidenter: List<String>)
+data class PersonerEndpointRequest(val personidenter: List<String>)
 
 /**
  * The relevant part of PersonInfo (data from KRR) that is sent as a response from this API.
  */
 @Serializable
-data class Person(
+data class MappedKRRPerson(
     val personident: String,
     val spraak: String? = null,
     val epostadresse: String? = null,
@@ -25,6 +25,7 @@ data class Person(
     val leverandoerAdresse: String? = null,
     val leverandoerSertifikat: String? = null,
 )
+
 
 @Serializable
 data class PersonTotal(
@@ -41,7 +42,7 @@ data class PersonTotal(
 )
 
 @Serializable
-enum class FeilType(val value: String) {
+enum class ErrorType(val value: String) {
     @SerialName("kan_ikke_varsles")
     KAN_IKKE_VARSLES("kan_ikke_varsles"),
 
@@ -70,9 +71,9 @@ enum class FeilType(val value: String) {
  * denoting if that person is not available.
  */
 @Serializable
-data class PersonDataGeneric<PersonType>(val person: PersonType?, val feil: FeilType?)
-typealias PersonData = PersonDataGeneric<Person>
-typealias PersonResponse = PersonDataGeneric<PersonTotal>
+data class PersonResponseGeneric<PersonType>(val person: PersonType?, val feil: ErrorType?)
+typealias MappedKRRPersonResponse = PersonResponseGeneric<MappedKRRPerson>
+typealias PersonResponse = PersonResponseGeneric<PersonTotal>
 
 /**
  * The actual response sent back to the user from this API.
@@ -80,7 +81,5 @@ typealias PersonResponse = PersonDataGeneric<PersonTotal>
  */
 @Serializable
 data class PeopleDataResponseGeneric<PersonType>(val personer: Map<String, PersonType>)
-
-typealias PeopleDataResponse = PeopleDataResponseGeneric<PersonData>
-
-typealias PersonerResponse = PeopleDataResponseGeneric<PersonResponse>
+typealias MappedKRRResponse = PeopleDataResponseGeneric<MappedKRRPersonResponse>
+typealias PersonerEndpointResponse = PeopleDataResponseGeneric<PersonResponse>

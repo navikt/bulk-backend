@@ -5,7 +5,7 @@ import java.time.ZonedDateTime
 
 object FilterTestData {
 
-    private val DEFAULT_PERSON_INPUT = DigDirPerson(
+    private val DEFAULT_PERSON_INPUT = KRRAPIPerson(
         personident = "1234",
         aktiv = true,
         kanVarsles = true,
@@ -22,7 +22,7 @@ object FilterTestData {
         )
     )
 
-    private val DEFAULT_PERSON_RESULT = Person(
+    private val DEFAULT_PERSON_RESULT = MappedKRRPerson(
         personident = "1234",
         spraak = "nb",
         epostadresse = "ola@nordmann.no",
@@ -32,7 +32,7 @@ object FilterTestData {
         leverandoerSertifikat = "noe"
     )
 
-    private fun createInput(person: DigDirPerson? = null, feil: DigDirFeil? = null) = DigDirResponse(
+    private fun createInput(person: KRRAPIPerson? = null, feil: KRRAPIError? = null) = KRRAPIResponse(
         personer = if (person == null) emptyMap() else mapOf(
             "1234" to person
         ),
@@ -41,9 +41,10 @@ object FilterTestData {
         )
     )
 
-    private fun createPersonData(person: Person?, feil: FeilType? = null) = PersonData(person = person, feil = feil)
+    private fun createPersonData(person: MappedKRRPerson?, feil: ErrorType? = null) =
+        MappedKRRPersonResponse(person = person, feil = feil)
 
-    private fun createResult(personData: PersonData) = PeopleDataResponse(
+    private fun createResult(personData: MappedKRRPersonResponse) = MappedKRRResponse(
         personer = mapOf("1234" to personData)
     )
 
@@ -61,7 +62,7 @@ object FilterTestData {
     val RESULT_KAN_VALRSLES_FALSE = createResult(
         createPersonData(
             null,
-            FeilType.KAN_IKKE_VARSLES
+            ErrorType.KAN_IKKE_VARSLES
         )
     )
 
@@ -75,7 +76,7 @@ object FilterTestData {
     val RESULT_OUTDATED_CONTACT_INFO = createResult(
         createPersonData(
             person = null,
-            feil = FeilType.UTDATERT_KONTAKTINFORMASJON
+            feil = ErrorType.UTDATERT_KONTAKTINFORMASJON
         )
     )
 
@@ -110,7 +111,7 @@ object FilterTestData {
     )
 
     val RESULT_OUTDATED_NUMBER_EPOST_NULL = createResult(
-        createPersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON)
+        createPersonData(null, ErrorType.UTDATERT_KONTAKTINFORMASJON)
     )
 
     val INPUT_OUTDATED_EPOST_NUMBER_NULL = createInput(
@@ -121,7 +122,7 @@ object FilterTestData {
     )
 
     val RESULT_OUTDATED_EPOST_NUMBER_NULL = createResult(
-        createPersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON)
+        createPersonData(null, ErrorType.UTDATERT_KONTAKTINFORMASJON)
     )
 
     val INPUT_EPOST_NUMBER_NULL = createInput(
@@ -132,56 +133,56 @@ object FilterTestData {
     )
 
     val RESULT_EPOST_NUMBER_NULL = createResult(
-        createPersonData(null, FeilType.KAN_IKKE_VARSLES)
+        createPersonData(null, ErrorType.KAN_IKKE_VARSLES)
     )
 
-    val INPUT_FEIL_PERSON_IKKE_FUNNET = createInput(null, DigDirFeil.PERSON_IKKE_FUNNET)
+    val INPUT_FEIL_PERSON_IKKE_FUNNET = createInput(null, KRRAPIError.PERSON_IKKE_FUNNET)
 
     val RESULT_FEIL_PERSON_IKKE_FUNNET = createResult(
         createPersonData(
             person = null,
-            feil = FeilType.PERSON_IKKE_FUNNET
+            feil = ErrorType.PERSON_IKKE_FUNNET
         )
     )
 
-    val INPUT_FEIL_STRENGT_FORTROLIG_ADRESSE = createInput(null, DigDirFeil.STRENGT_FORTROLIG_ADRESSE)
+    val INPUT_FEIL_STRENGT_FORTROLIG_ADRESSE = createInput(null, KRRAPIError.STRENGT_FORTROLIG_ADRESSE)
 
     val RESULT_FEIL_STRENGT_FORTROLIG_ADRESSE = createResult(
         createPersonData(
             person = null,
-            feil = FeilType.STRENGT_FORTROLIG_ADRESSE
+            feil = ErrorType.STRENGT_FORTROLIG_ADRESSE
         )
     )
 
     val INPUT_FEIL_STRENGT_FORTROLIG_UTENLANDSK_ADRESSE =
-        createInput(null, DigDirFeil.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE)
+        createInput(null, KRRAPIError.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE)
 
     val RESULT_FEIL_STRENGT_FORTROLIG_UTENLANDSK_ADRESSE = createResult(
         createPersonData(
             person = null,
-            feil = FeilType.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE
+            feil = ErrorType.STRENGT_FORTROLIG_UTENLANDSK_ADRESSE
         )
     )
 
-    val INPUT_FEIL_FORTROLIG_ADRESSE = createInput(null, DigDirFeil.FORTROLIG_ADRESSE)
+    val INPUT_FEIL_FORTROLIG_ADRESSE = createInput(null, KRRAPIError.FORTROLIG_ADRESSE)
 
     val RESULT_FEIL_FORTROLIG_ADRESSE = createResult(
         createPersonData(
             person = null,
-            feil = FeilType.FORTROLIG_ADRESSE
+            feil = ErrorType.FORTROLIG_ADRESSE
         )
     )
 
-    val INPUT_FEIL_SKJERMET = createInput(null, DigDirFeil.SKJERMET)
+    val INPUT_FEIL_SKJERMET = createInput(null, KRRAPIError.SKJERMET)
 
     val RESULT_FEIL_SKJERMET = createResult(
         createPersonData(
             person = null,
-            feil = FeilType.SKJERMET
+            feil = ErrorType.SKJERMET
         )
     )
 
-    val INPUT_MULTIPLE_PEOPLE = DigDirResponse(
+    val INPUT_MULTIPLE_PEOPLE = KRRAPIResponse(
         personer = mapOf(
             "1234" to DEFAULT_PERSON_INPUT,
             "4321" to DEFAULT_PERSON_INPUT.copy(personident = "4321", kanVarsles = false, reservert = true),
@@ -201,23 +202,31 @@ object FilterTestData {
             ),
         ),
         feil = mapOf(
-            "1111" to DigDirFeil.PERSON_IKKE_FUNNET,
-            "2222" to DigDirFeil.SKJERMET,
-            "3333" to DigDirFeil.SKJERMET
+            "1111" to KRRAPIError.PERSON_IKKE_FUNNET,
+            "2222" to KRRAPIError.SKJERMET,
+            "3333" to KRRAPIError.SKJERMET
         )
     )
 
-    val RESULT_MULTIPLE_PEOPLE = PeopleDataResponse(
+    val RESULT_MULTIPLE_PEOPLE = MappedKRRResponse(
         personer = mapOf(
-            "1234" to PersonData(DEFAULT_PERSON_RESULT, null),
-            "4321" to PersonData(null, FeilType.KAN_IKKE_VARSLES),
-            "6432" to PersonData(null, FeilType.KAN_IKKE_VARSLES),
-            "2345" to PersonData(DEFAULT_PERSON_RESULT.copy(personident = "2345", epostadresse = null), null),
-            "5678" to PersonData(DEFAULT_PERSON_RESULT.copy(personident = "5678", mobiltelefonnummer = null), null),
-            "7890" to PersonData(null, FeilType.UTDATERT_KONTAKTINFORMASJON),
-            "1111" to PersonData(null, FeilType.PERSON_IKKE_FUNNET),
-            "2222" to PersonData(null, FeilType.SKJERMET),
-            "3333" to PersonData(null, FeilType.SKJERMET),
+            "1234" to MappedKRRPersonResponse(DEFAULT_PERSON_RESULT, null),
+            "4321" to MappedKRRPersonResponse(null, ErrorType.KAN_IKKE_VARSLES),
+            "6432" to MappedKRRPersonResponse(null, ErrorType.KAN_IKKE_VARSLES),
+            "2345" to MappedKRRPersonResponse(
+                DEFAULT_PERSON_RESULT.copy(personident = "2345", epostadresse = null),
+                null
+            ),
+            "5678" to MappedKRRPersonResponse(
+                DEFAULT_PERSON_RESULT.copy(
+                    personident = "5678",
+                    mobiltelefonnummer = null
+                ), null
+            ),
+            "7890" to MappedKRRPersonResponse(null, ErrorType.UTDATERT_KONTAKTINFORMASJON),
+            "1111" to MappedKRRPersonResponse(null, ErrorType.PERSON_IKKE_FUNNET),
+            "2222" to MappedKRRPersonResponse(null, ErrorType.SKJERMET),
+            "3333" to MappedKRRPersonResponse(null, ErrorType.SKJERMET),
         )
     )
 }
