@@ -47,7 +47,7 @@ suspend fun getPeopleDataFromKRR(
     accessToken: String,
     navCallId: String
 ): KRRAPIResponse? {
-    delay((0..500).random().toLong())
+    delay((0..250).random().toLong())
     val localClient = clientArg ?: client
     val res =
         try {
@@ -77,7 +77,7 @@ suspend fun getPeopleDataFromKRR(
 }
 
 suspend fun getPeopleDataFromPDL(identer: List<String>, accessToken: String): PDLResponse? {
-    delay((0..500).random().toLong())
+    delay((0..250).random().toLong())
     val pdlQuery = PdlQuery(PdlQuery.Variables(identer))
     val result: GraphQLClientResponse<PdlQuery.Result> = gqlClient.execute(pdlQuery) {
         header(HttpHeaders.Authorization, "Bearer $accessToken")
