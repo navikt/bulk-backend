@@ -1,27 +1,35 @@
 package no.nav.bulk.lib
 
 import no.nav.bulk.generated.pdlquery.Vegadresse
+import no.nav.bulk.models.MappedKRRPersonResponse
+import no.nav.bulk.models.MappedKRRResponse
 import no.nav.bulk.models.PDLResponse
-import no.nav.bulk.models.PeopleDataResponse
 
 private const val krrCsvHeader: String = "Personident,Språk,E-post,Mobilnummer,Adresse,Feil"
 private const val krrAndPdlDataHeader: String =
     "Personident,Språk,E-post,Mobilnummer,Adresse,Fornavn,Mellomnavn,Etternavn,Dødsdato,Feil"
 
+fun java.lang.StringBuilder.appendSpraakEpostPhoneFromKRRPersonData(
+    personident: String,
+    personData: MappedKRRPersonResponse
+) {
+    append(personident)
+    append(',')
+    append(personData.person?.spraak ?: "")
+    append(',')
+    append(personData.person?.epostadresse ?: "")
+    append(',')
+    append(personData.person?.mobiltelefonnummer ?: "")
+}
+
 private fun mapKrrDataToCSV(
-    peopleData: PeopleDataResponse
+    peopleData: MappedKRRResponse
 ): StringBuilder {
     val stringBuilder = StringBuilder()
     stringBuilder.append(krrCsvHeader)
     for ((personident, personData) in peopleData.personer) {
         stringBuilder.append("\n")
-        stringBuilder.append(personident)
-        stringBuilder.append(',')
-        stringBuilder.append(personData.person?.spraak ?: "")
-        stringBuilder.append(',')
-        stringBuilder.append(personData.person?.epostadresse ?: "")
-        stringBuilder.append(',')
-        stringBuilder.append(personData.person?.mobiltelefonnummer ?: "")
+        stringBuilder.appendSpraakEpostPhoneFromKRRPersonData(personident, personData)
         stringBuilder.append(',')
         stringBuilder.append(personData.person?.adresse ?: "")
         stringBuilder.append(',')
@@ -31,7 +39,7 @@ private fun mapKrrDataToCSV(
 }
 
 private fun implMapKrrAndPdlDataToCsv(
-    krrData: PeopleDataResponse,
+    krrData: MappedKRRResponse,
     pdlData: PDLResponse
 ): StringBuilder {
     val stringBuilder = StringBuilder()
@@ -39,13 +47,7 @@ private fun implMapKrrAndPdlDataToCsv(
     for ((personident, krrPerson) in krrData.personer) {
         val pdlPerson = pdlData[personident]
         stringBuilder.append("\n")
-        stringBuilder.append(personident)
-        stringBuilder.append(',')
-        stringBuilder.append(krrPerson.person?.spraak ?: "")
-        stringBuilder.append(',')
-        stringBuilder.append(krrPerson.person?.epostadresse ?: "")
-        stringBuilder.append(',')
-        stringBuilder.append(krrPerson.person?.mobiltelefonnummer ?: "")
+        stringBuilder.appendSpraakEpostPhoneFromKRRPersonData(personident, krrPerson)
         stringBuilder.append(',')
         stringBuilder.append(
             krrPerson.person?.adresse
@@ -70,7 +72,7 @@ private fun implMapKrrAndPdlDataToCsv(
     return stringBuilder
 }
 
-fun mapToCSV(krrData: PeopleDataResponse, pdlData: PDLResponse? = null): String {
+fun mapToCSV(krrData: MappedKRRResponse, pdlData: PDLResponse? = null): String {
     if (!pdlData.isNullOrEmpty())
         return implMapKrrAndPdlDataToCsv(krrData, pdlData).toString()
     return mapKrrDataToCSV(krrData).toString()

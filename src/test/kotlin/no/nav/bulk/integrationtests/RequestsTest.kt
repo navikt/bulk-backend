@@ -13,7 +13,7 @@ import io.ktor.util.*
 import no.nav.bulk.initializeHttpClient
 import no.nav.bulk.lib.AuthConfig
 import no.nav.bulk.lib.getAccessTokenClientCredentials
-import no.nav.bulk.lib.getContactInfo
+import no.nav.bulk.lib.getPeopleDataFromKRR
 import no.nav.bulk.plugins.configureHTTP
 import no.nav.bulk.plugins.configureRouting
 import org.junit.jupiter.api.Test
@@ -79,7 +79,11 @@ class RequestsTest {
             )
             val accessToken = getAccessTokenClientCredentials(AuthConfig.KRR_API_SCOPE) ?: ""
             val response =
-                getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
+                getPeopleDataFromKRR(
+                    testPersonidenter,
+                    accessToken = accessToken,
+                    navCallId = UUID.randomUUID().toString()
+                )
 
             if (response != null) {
                 assertEquals(2, response.feil.size)
@@ -109,7 +113,11 @@ class RequestsTest {
             )
             val accessToken = getAccessTokenClientCredentials(AuthConfig.KRR_API_SCOPE) ?: ""
             val response =
-                getContactInfo(testPersonidenter, accessToken = accessToken, navCallId = UUID.randomUUID().toString())
+                getPeopleDataFromKRR(
+                    testPersonidenter,
+                    accessToken = accessToken,
+                    navCallId = UUID.randomUUID().toString()
+                )
 
             if (response != null) {
                 assertEquals(true, response.personer.isNotEmpty())

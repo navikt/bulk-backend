@@ -35,7 +35,7 @@ fun getCorrectAccessToken(headers: Headers): String? {
     return getAccessTokenOBO(AuthConfig.KRR_API_SCOPE, accessToken)
 }
 
-fun combineKRRAndPDL(peopleDataResponse: PeopleDataResponse, pdlResponse: PDLResponse?): PersonerResponse {
+fun combineKRRAndPDL(peopleDataResponse: MappedKRRResponse, pdlResponse: PDLResponse?): PersonerEndpointResponse {
     val personerResponseMap = mutableMapOf<String, PersonResponse>()
     for ((personident, personData) in peopleDataResponse.personer) {
         val pdlPerson = pdlResponse?.getValue(personident)
@@ -52,13 +52,13 @@ fun combineKRRAndPDL(peopleDataResponse: PeopleDataResponse, pdlResponse: PDLRes
         val persData = PersonResponse(personTotal, personData.feil)
         personerResponseMap[personident] = persData
     }
-    return PersonerResponse(personerResponseMap)
+    return PersonerEndpointResponse(personerResponseMap)
 }
 
 sealed class PersonerStatus {
     class Error(val status: HttpStatusCode, val message: String? = null) : PersonerStatus()
     class SuccessCSV(val csv: String) : PersonerStatus()
-    class SuccessJson(val response: PersonerResponse) : PersonerStatus()
+    class SuccessJson(val response: PersonerEndpointResponse) : PersonerStatus()
 
 }
 
@@ -68,13 +68,12 @@ sealed class PersonerStatus {
  * the response into PeopleDataResponse and creates the CSV file, that is used in the response to
  * the call.
  */
-suspend fun personerEndpointResponse(
+suspend fun getPersonerTotalBulk(
+    requestData: PersonerEndpointRequest,
+    responseFormat: ResponseFormat,
+    includePdl: Boolean = false,
     headers: Headers,
-    queryParameters: Parameters,
-    requestData: PeopleDataRequest
 ): PersonerStatus {
-    val responseFormat = if (queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
-    val includePdl = queryParameters["pdl"].toBoolean()
     val accessTokenKRR = getCorrectAccessToken(headers) ?: return PersonerStatus.Error(HttpStatusCode.Unauthorized)
     val accessTokenPDL = getAccessTokenClientCredentials(AuthConfig.PDL_API_SCOPE)
         ?: return PersonerStatus.Error(HttpStatusCode.InternalServerError)
@@ -82,16 +81,16 @@ suspend fun personerEndpointResponse(
 
     logger.info("Received request for ${requestData.personidenter.size} personidenter.")
     val startBatchRequest = LocalDateTime.now()
-    lateinit var peopleDataResponse: PeopleDataResponse
+    lateinit var krrResponse: MappedKRRResponse
     var pdlResponse: PDLResponse? = null
 
     runBlocking {
         launch {
-            peopleDataResponse = constructPeopleDataResponse(requestData.personidenter, accessTokenKRR, navCallId)
+            krrResponse = getMappedKRRDataBulk(requestData.personidenter, accessTokenKRR, navCallId)
         }
         if (includePdl) {
             launch {
-                pdlResponse = constructPDLResponse(requestData.personidenter, accessTokenPDL)
+                pdlResponse = getPDLDataBulk(requestData.personidenter, accessTokenPDL)
             }
         }
     }
@@ -99,49 +98,49 @@ suspend fun personerEndpointResponse(
     logger.info(
         "Time batch request: ${startBatchRequest.until(endBatchRequest, ChronoUnit.SECONDS)} sec"
     )
-    if (peopleDataResponse.personer.isEmpty()) return PersonerStatus.Error(
+    if (krrResponse.personer.isEmpty()) return PersonerStatus.Error(
         HttpStatusCode.InternalServerError,
         "KRR responded with no data."
     )
     if (responseFormat == ResponseFormat.CSV)
-        return PersonerStatus.SuccessCSV(mapToCSV(peopleDataResponse, pdlResponse))
-    return PersonerStatus.SuccessJson(combineKRRAndPDL(peopleDataResponse, pdlResponse))
+        return PersonerStatus.SuccessCSV(mapToCSV(krrResponse, pdlResponse))
+    return PersonerStatus.SuccessJson(combineKRRAndPDL(krrResponse, pdlResponse))
 }
 
 fun getOptimalNumberOfThreads(requestSize: Int, batchSizePerRequest: Int, maxNumberOfThreads: Int = 20): Int {
     return min(max(requestSize / batchSizePerRequest * 10, 1), maxNumberOfThreads)
 }
 
-suspend fun constructPeopleDataResponse(
+suspend fun getMappedKRRDataBulk(
     identer: List<String>,
     accessToken: String,
     navCallId: String
-): PeopleDataResponse =
-    PeopleDataResponse(
-        performBulkRequestsInParallel(
+): MappedKRRResponse =
+    MappedKRRResponse(
+        getBulkFromAPIInParallel(
             identer,
             accessToken,
             navCallId,
             numThreads = getOptimalNumberOfThreads(identer.size, 500),
-            ::getPeopleDataResponse
+            ::getMappedKRRRDataAsThread
         )
     )
 
-suspend fun constructPDLResponse(identer: List<String>, accessToken: String): PDLResponse =
-    performBulkRequestsInParallel(
+suspend fun getPDLDataBulk(identer: List<String>, accessToken: String): PDLResponse =
+    getBulkFromAPIInParallel(
         identer,
         accessToken,
         navCallId = "", // Don't care about navCallId here
         numThreads = getOptimalNumberOfThreads(identer.size, 100),
-        reqFunc = ::getPDLResponse,
+        requestPerThreadFunc = ::getPDLDataAsThread,
     )
 
-suspend fun <Value> performBulkRequestsInParallel(
+suspend fun <Value> getBulkFromAPIInParallel(
     identer: List<String>,
     accessToken: String,
     navCallId: String,
     numThreads: Int = 5,
-    reqFunc: suspend (identer: List<String>, accessToken: String, threadNr: Int, threadBatchSize: Int, navCallId: String) -> Map<String, Value>
+    requestPerThreadFunc: suspend (identer: List<String>, accessToken: String, threadNr: Int, threadBatchSize: Int, navCallId: String) -> Map<String, Value>
 
 ): Map<String, Value> {
     val valueMap = mutableMapOf<String, Value>()
@@ -153,7 +152,7 @@ suspend fun <Value> performBulkRequestsInParallel(
         launch {
             for (i in 0 until numThreads) {
                 val deferred = async {
-                    reqFunc(
+                    requestPerThreadFunc(
                         identer, accessToken, i, batchSizeForThreads, navCallId
                     )
                 }
@@ -168,7 +167,7 @@ suspend fun <Value> performBulkRequestsInParallel(
     return valueMap
 }
 
-suspend fun getPDLResponse(
+suspend fun getPDLDataAsThread(
     identer: List<String>,
     accessToken: String,
     threadNr: Int,
@@ -180,7 +179,7 @@ suspend fun getPDLResponse(
 
     for (j in threadNr * batchSize until threadNr * batchSize + batchSize step stepSize) {
         val end = min(j + stepSize, identer.size)
-        val pdlResponse = getPDLInfo(
+        val pdlResponse = getPeopleDataFromPDL(
             identer.slice(j until end), accessToken = accessToken
         ) ?: continue
         pdlResponseTotal.putAll(pdlResponse)
@@ -188,18 +187,18 @@ suspend fun getPDLResponse(
     return pdlResponseTotal
 }
 
-suspend fun getPeopleDataResponse(
+suspend fun getMappedKRRRDataAsThread(
     identer: List<String>, accessToken: String, threadNr: Int, batchSize: Int, navCallId: String,
-): Map<String, PersonData> {
-    val peopleDataResponse = PeopleDataResponse(mutableMapOf())
+): Map<String, MappedKRRPersonResponse> {
+    val peopleDataResponse = MappedKRRResponse(mutableMapOf())
     val stepSize = 500
 
     for (j in threadNr * batchSize until threadNr * batchSize + batchSize step stepSize) {
         val end = min(j + stepSize, identer.size)
-        val digDirResponse = getContactInfo(
+        val digDirResponse = getPeopleDataFromKRR(
             identer.slice(j until end), accessToken = accessToken, navCallId = navCallId
         ) ?: continue
-        val filteredPeopleInfo = filterAndMapDigDirResponse(digDirResponse)
+        val filteredPeopleInfo = filerAndMapKRRResponse(digDirResponse)
         (peopleDataResponse.personer as MutableMap).putAll(filteredPeopleInfo.personer)
     }
     return peopleDataResponse.personer
@@ -214,17 +213,20 @@ fun Application.configureRouting() {
         fun postPersonerEndpoint() = post("/personer") {
             logger.info("Process request")
             val start = LocalDateTime.now()
-            val requestData: PeopleDataRequest
+            val requestData: PersonerEndpointRequest
             try {
                 requestData = call.receive()
             } catch (e: CannotTransformContentToTypeException) {
                 return@post call.respond(HttpStatusCode.BadRequest, e.message.toString())
             }
-            when (val status =
-                personerEndpointResponse(call.request.headers, call.request.queryParameters, requestData)) {
-                is PersonerStatus.Error -> call.respond(status.status, status.message ?: "")
-                is PersonerStatus.SuccessCSV -> call.respondText(status.csv)
-                is PersonerStatus.SuccessJson -> call.respond(status.response)
+            val queryParameters = call.request.queryParameters
+            val responseFormat = if (queryParameters["type"] == "csv") ResponseFormat.CSV else ResponseFormat.JSON
+            val includePdl = queryParameters["pdl"].toBoolean()
+            when (val responseStatus =
+                getPersonerTotalBulk(requestData, responseFormat, includePdl, call.request.headers)) {
+                is PersonerStatus.Error -> call.respond(responseStatus.status, responseStatus.message ?: "")
+                is PersonerStatus.SuccessCSV -> call.respondText(responseStatus.csv)
+                is PersonerStatus.SuccessJson -> call.respond(responseStatus.response)
             }
             val end = LocalDateTime.now()
             logger.info("Time processing request: ${start.until(end, ChronoUnit.SECONDS)}s")

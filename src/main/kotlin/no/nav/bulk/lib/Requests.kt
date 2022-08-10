@@ -13,7 +13,7 @@ import no.nav.bulk.generated.PdlQuery
 import no.nav.bulk.gqlClient
 import no.nav.bulk.logger
 import no.nav.bulk.models.DigDirRequest
-import no.nav.bulk.models.DigDirResponse
+import no.nav.bulk.models.KRRAPIResponse
 import no.nav.bulk.models.PDLResponse
 import no.nav.common.token_client.builder.AzureAdTokenClientBuilder
 import no.nav.common.token_client.client.AzureAdMachineToMachineTokenClient
@@ -41,12 +41,12 @@ fun getAccessTokenClientCredentials(scope: String): String? {
     return tokenClient?.createMachineToMachineToken(scope)
 }
 
-suspend fun getContactInfo(
+suspend fun getPeopleDataFromKRR(
     personnr: List<String>,
     clientArg: HttpClient? = null,
     accessToken: String,
     navCallId: String
-): DigDirResponse? {
+): KRRAPIResponse? {
     delay((0..500).random().toLong())
     val localClient = clientArg ?: client
     val res =
@@ -76,8 +76,7 @@ suspend fun getContactInfo(
     else null
 }
 
-// TODO: Change return type from null to actual error codes
-suspend fun getPDLInfo(identer: List<String>, accessToken: String): PDLResponse? {
+suspend fun getPeopleDataFromPDL(identer: List<String>, accessToken: String): PDLResponse? {
     delay((0..500).random().toLong())
     val pdlQuery = PdlQuery(PdlQuery.Variables(identer))
     val result: GraphQLClientResponse<PdlQuery.Result> = gqlClient.execute(pdlQuery) {
@@ -86,9 +85,9 @@ suspend fun getPDLInfo(identer: List<String>, accessToken: String): PDLResponse?
     }
     val pdlErrors = result.errors
     if (pdlErrors != null) logger.error("Error in requests to PDL: ${pdlErrors.joinToString { it.message }}")
-    return result.data?.mapPersonBolkResultToPDLResponse()
+    return result.data?.toPDLResponse()
 }
 
-fun PdlQuery.Result.mapPersonBolkResultToPDLResponse(): PDLResponse {
+fun PdlQuery.Result.toPDLResponse(): PDLResponse {
     return hentPersonBolk.associateBy({ it.ident }, { it.person })
 }
