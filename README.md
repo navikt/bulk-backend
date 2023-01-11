@@ -1,5 +1,7 @@
 # 🪨🔙🔚 bulk-backend
 
+Projekt utviklet av sommerstudenter hos NAV 2022, kan forkes av team som tar eierskap til applikasjonen.
+
 Dette prosjektet representerer backenden for bulk-uttrekk av kontaktinformasjon fra KRR.
 
 ## 🔬 Utvikling
